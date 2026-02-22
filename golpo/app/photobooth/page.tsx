@@ -1,14 +1,21 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { getUserDb, updateUserDb } from "@/lib/firebase/user-db";
 
 const SHOTS_TOTAL = 3;
 const COUNTDOWN_SECONDS = 3;
 const FLASH_DURATION_MS = 140;
 const INTER_SHOT_DELAY_MS = 500;
+
+type PhotoboothPhase =
+  | "idle"
+  | "capturing-first"
+  | "review-first"
+  | "capturing-redo"
+  | "review-final";
 
 function wait(ms: number) {
   return new Promise((resolve) => {
@@ -23,6 +30,7 @@ export default function PhotoboothPage() {
   const streamRef = useRef<MediaStream | null>(null);
 
   const [photos, setPhotos] = useState<string[]>([]);
+  const [phase, setPhase] = useState<PhotoboothPhase>("idle");
   const [isBooting, setIsBooting] = useState(true);
   const [isStartingCamera, setIsStartingCamera] = useState(true);
   const [hasCamera, setHasCamera] = useState(false);
@@ -35,6 +43,8 @@ export default function PhotoboothPage() {
   const [flashVisible, setFlashVisible] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [status, setStatus] = useState<string | null>(null);
+
+  const isReviewPhase = phase === "review-first" || phase === "review-final";
 
   const startCamera = useCallback(async () => {
     if (streamRef.current) {
@@ -72,17 +82,7 @@ export default function PhotoboothPage() {
 
     async function loadExisting() {
       try {
-        const doc = await getUserDb();
-        if (!mounted || !doc) {
-          return;
-        }
-
-        const existing = [doc.pic01, doc.pic02, doc.pic03].filter(
-          (value): value is string => Boolean(value)
-        );
-        if (existing.length > 0) {
-          setPhotos(existing);
-        }
+        await getUserDb();
       } catch (err) {
         console.error("Failed to load existing photobooth fields:", err);
       } finally {
@@ -130,20 +130,29 @@ export default function PhotoboothPage() {
       return;
     }
 
+    const capturePhase: PhotoboothPhase = isRedoAttempt ? "capturing-redo" : "capturing-first";
+    const reviewPhase: PhotoboothPhase = isRedoAttempt ? "review-final" : "review-first";
+    const previousPhase = phase;
+
+    // Hide previews immediately when starting a capture run.
+    setPhase(capturePhase);
+
     if (!hasCamera) {
       await startCamera();
       if (!streamRef.current) {
+        setPhase(previousPhase);
         return;
       }
     }
 
-    if (!isRedoAttempt && hasCompletedFirstTry) {
-      setStatus("First try is already complete. Use Redo for your second chance.");
+    if (!isRedoAttempt && phase !== "idle") {
+      setStatus("First try is already complete. Use Redo or Next.");
       return;
     }
 
-    if (isRedoAttempt && (!hasCompletedFirstTry || hasUsedRedo)) {
-      setStatus("Redo is only available once after the first completed try.");
+    if (isRedoAttempt && phase !== "review-first") {
+      setStatus("Redo is only available once after the first review.");
+      setPhase(previousPhase);
       return;
     }
 
@@ -153,6 +162,7 @@ export default function PhotoboothPage() {
     if (isRedoAttempt) {
       setPhotos([]);
     }
+
     const nextPhotos: string[] = [];
 
     try {
@@ -187,16 +197,19 @@ export default function PhotoboothPage() {
         webcamImageUrl: nextPhotos[0],
         photoboothRedoCount: isRedoAttempt ? 1 : 0,
       });
+
       if (isRedoAttempt) {
         setHasUsedRedo(true);
-        setStatus("Second try complete. Moving to final image...");
-        router.push("/final-image");
+        setStatus("Review complete. Continue with Next.");
       } else {
         setHasCompletedFirstTry(true);
-        setStatus("First try complete. Press Redo for your second and final try.");
+        setStatus("Review your photos. Choose Redo or Next.");
       }
+
+      setPhase(reviewPhase);
     } catch (err) {
       console.error("Photobooth capture failed:", err);
+      setPhase(previousPhase);
       setError("Could not complete the interaction. Please try again.");
     } finally {
       setActiveShot(null);
@@ -207,41 +220,76 @@ export default function PhotoboothPage() {
     }
   }
 
+  function cameraBannerText() {
+    if (!hasCamera) {
+      return "Waiting for camera permission...";
+    }
+    if (phase === "capturing-first" || phase === "capturing-redo") {
+      return `Capturing shot ${activeShot} of ${SHOTS_TOTAL}`;
+    }
+    if (phase === "review-first") {
+      return "First try complete";
+    }
+    if (phase === "review-final") {
+      return "Second try complete";
+    }
+    return "Ready to start interaction";
+  }
+
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-5xl flex-col justify-center gap-8 px-6 py-12">
       <div className="space-y-3">
         <p className="text-sm uppercase tracking-[0.18em] opacity-80">Step 5</p>
         <h1 className="font-instrument text-4xl leading-tight md:text-5xl">Photobooth</h1>
         <p className="max-w-2xl opacity-90">
-          Camera access starts immediately. You get two chances: Start for the first try, then
-          Redo for your second and final try.
+          Camera access starts immediately. Start your first try, review the photos, then decide to
+          continue or redo once.
         </p>
       </div>
 
-      <section className="space-y-5">
-        <div className="relative block aspect-square w-full max-w-[520px] overflow-hidden border border-white/25 bg-black/35 text-left">
-          <video ref={videoRef} className="absolute inset-0 h-full w-full object-cover" playsInline muted />
-          <div className="absolute left-4 top-4 border border-white/30 bg-black/45 px-4 py-2 text-xs uppercase tracking-[0.15em] text-white/85">
-            {!hasCamera
-              ? "Waiting for camera permission..."
-              : photos.length >= SHOTS_TOTAL
-                ? "All 3 shots captured"
-                : isCapturing
-                  ? `Capturing shot ${activeShot} of ${SHOTS_TOTAL}`
-                  : "Ready to start interaction"}
-          </div>
-          {flashVisible ? <div className="absolute inset-0 bg-white/95" /> : null}
-          {isCapturing ? (
-            <div className="absolute inset-0 grid place-items-center bg-black/25">
-              <div className="flex flex-col items-center gap-2 border border-white/35 bg-black/40 px-5 py-4 text-white">
-                <p className="text-xs uppercase tracking-[0.15em]">Capturing shot {activeShot}</p>
-                {countdown ? <p className="text-4xl font-semibold leading-none">{countdown}</p> : null}
+      {isReviewPhase ? (
+        <section className="space-y-3">
+          <p className="text-xs uppercase tracking-[0.16em] text-white/80">Photo Preview</p>
+          <div className="grid gap-4 md:grid-cols-3">
+            {[0, 1, 2].map((index) => (
+              <div key={`preview-${index}`} className="aspect-[4/5] overflow-hidden border border-white/30 bg-black/30">
+                {photos[index] ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={photos[index]}
+                    alt={`Captured photo ${index + 1}`}
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <div className="grid h-full w-full place-items-center text-xs uppercase tracking-[0.16em] text-white/65">
+                    Missing photo {index + 1}
+                  </div>
+                )}
               </div>
-            </div>
-          ) : null}
-        </div>
+            ))}
+          </div>
+        </section>
+      ) : null}
 
-      </section>
+      {!isReviewPhase ? (
+        <section className="space-y-5">
+          <div className="relative block aspect-square w-full max-w-[520px] overflow-hidden border border-white/25 bg-black/35 text-left">
+            <video ref={videoRef} className="absolute inset-0 h-full w-full object-cover" playsInline muted />
+            <div className="absolute left-4 top-4 border border-white/30 bg-black/45 px-4 py-2 text-xs uppercase tracking-[0.15em] text-white/85">
+              {cameraBannerText()}
+            </div>
+            {flashVisible ? <div className="absolute inset-0 bg-white/95" /> : null}
+            {isCapturing ? (
+              <div className="absolute inset-0 grid place-items-center bg-black/25">
+                <div className="flex flex-col items-center gap-2 border border-white/35 bg-black/40 px-5 py-4 text-white">
+                  <p className="text-xs uppercase tracking-[0.15em]">Capturing shot {activeShot}</p>
+                  {countdown ? <p className="text-4xl font-semibold leading-none">{countdown}</p> : null}
+                </div>
+              </div>
+            ) : null}
+          </div>
+        </section>
+      ) : null}
 
       <div className="flex flex-wrap items-center gap-3">
         <Link
@@ -250,25 +298,44 @@ export default function PhotoboothPage() {
         >
           Back
         </Link>
-        <button
-          type="button"
-          onClick={() => void runInteraction(false)}
-          disabled={isCapturing || isSaving || hasCompletedFirstTry}
-          className="inline-flex border border-black/20 bg-black/15 px-5 py-2.5 text-sm font-semibold transition hover:bg-black/25 disabled:cursor-not-allowed disabled:opacity-60"
-        >
-          Start
-        </button>
-        <button
-          type="button"
-          onClick={() => void runInteraction(true)}
-          disabled={!hasCompletedFirstTry || hasUsedRedo || !hasCamera || isCapturing || isSaving || photos.length < SHOTS_TOTAL}
-          className="inline-flex border border-black/20 bg-black/10 px-5 py-2.5 text-sm font-semibold transition hover:bg-black/20 disabled:cursor-not-allowed disabled:opacity-60"
-        >
-          Redo
-        </button>
+
+        {phase === "idle" ? (
+          <button
+            type="button"
+            onClick={() => void runInteraction(false)}
+            disabled={isCapturing || isSaving}
+            className="inline-flex border border-black/20 bg-black/15 px-5 py-2.5 text-sm font-semibold transition hover:bg-black/25 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            Start
+          </button>
+        ) : null}
+
+        {phase === "review-first" ? (
+          <button
+            type="button"
+            onClick={() => void runInteraction(true)}
+            disabled={!hasCompletedFirstTry || hasUsedRedo || !hasCamera || isCapturing || isSaving}
+            className="inline-flex border border-black/20 bg-black/10 px-5 py-2.5 text-sm font-semibold transition hover:bg-black/20 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            Redo
+          </button>
+        ) : null}
+
+        {phase === "review-first" || phase === "review-final" ? (
+          <button
+            type="button"
+            onClick={() => router.push("/final-image")}
+            disabled={isCapturing || isSaving}
+            className="inline-flex border border-black/20 bg-black/20 px-5 py-2.5 text-sm font-semibold transition hover:bg-black/30 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            Next
+          </button>
+        ) : null}
       </div>
 
-      <p className="text-sm text-white/80">Chances used: {hasUsedRedo ? "2 of 2" : hasCompletedFirstTry ? "1 of 2" : "0 of 2"}</p>
+      <p className="text-sm text-white/80">
+        Chances used: {hasUsedRedo ? "2 of 2" : hasCompletedFirstTry ? "1 of 2" : "0 of 2"}
+      </p>
       {isBooting ? <p className="text-sm text-white/80">Loading previous photobooth data...</p> : null}
       {isStartingCamera ? <p className="text-sm text-white/80">Opening camera...</p> : null}
       {error ? <p className="text-sm text-red-100">{error}</p> : null}
