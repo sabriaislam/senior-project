@@ -1,16 +1,23 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import {
   defaultDraft,
   INSTALLATION_CACHE_KEY,
   type InstallationDraft,
 } from "@/lib/installation-cache";
+import { updateUserDb } from "@/lib/firebase/user-db";
+
 
 export default function NamePage() {
+  const router = useRouter();
   const [draft, setDraft] = useState<InstallationDraft>(defaultDraft);
   const [loaded, setLoaded] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [saved, setSaved] = useState(false);
 
   useEffect(() => {
     try {
@@ -18,7 +25,7 @@ export default function NamePage() {
       if (raw) {
         const parsed = JSON.parse(raw) as Partial<InstallationDraft>;
         setDraft({
-          fullName: parsed.fullName ?? "",
+          name: parsed.name ?? "",
           email: parsed.email ?? "",
         });
       }
@@ -36,19 +43,52 @@ export default function NamePage() {
     window.localStorage.setItem(INSTALLATION_CACHE_KEY, JSON.stringify(draft));
   }, [draft, loaded]);
 
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setSaved(false);
+    console.log("submit fired", draft);
+
+    if (!draft.name.trim() || !draft.email.trim()) {
+      setError("Please add both full name and email.");
+      console.log("validation failed: missing name or email");
+      return;
+    }
+
+    setError(null);
+    setIsSaving(true);
+    console.time("firestore-save");
+    console.log("before updateUserDb");
+
+    try {
+      await updateUserDb({
+        name: draft.name.trim(),
+        email: draft.email.trim(),
+      });
+      console.log("after updateUserDb");
+      setSaved(true);
+      router.push("/questions");
+    } catch (err) {
+      console.error("Firestore save failed:", err);
+      setError("Could not save to Firebase. Check your Firebase config and rules.");
+    } finally {
+      console.timeEnd("firestore-save");
+      setIsSaving(false);
+    }
+  }
+
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-3xl flex-col justify-center gap-8 px-6 py-12">
       <div className="space-y-3">
-        <h1 className="font-instrument text-4xl leading-tight md:text-5xl">Questions</h1>
+        <h1 className="font-instrument text-4xl leading-tight md:text-5xl">Name</h1>
       </div>
-      <form className="space-y-5">
+      <form id="name-form" className="space-y-5" onSubmit={handleSubmit}>
         <label className="block space-y-2">
           <span className="text-sm font-semibold">Full name</span>
           <input
             type="text"
-            value={draft.fullName}
+            value={draft.name}
             onChange={(event) =>
-              setDraft((prev) => ({ ...prev, fullName: event.target.value }))
+              setDraft((prev) => ({ ...prev, name: event.target.value }))
             }
             placeholder="Jane Doe"
             className="w-full rounded-xl border border-black/20 bg-white/80 px-4 py-3 text-black outline-none ring-0 transition focus:border-black/50"
@@ -77,13 +117,16 @@ export default function NamePage() {
           Back
         </Link>
         <button
-          type="button"
-          className="inline-flex rounded-full border border-black/20 bg-black/10 px-5 py-2.5 text-sm font-semibold transition hover:bg-black/20"
+          type="submit"
+          form="name-form"
+          disabled={isSaving}
+          className="inline-flex rounded-full border border-black/20 bg-black/10 px-5 py-2.5 text-sm font-semibold transition hover:bg-black/20 disabled:cursor-not-allowed disabled:opacity-60"
         >
-          Next
+          {isSaving ? "Saving..." : "Next"}
         </button>
       </div>
+      {error ? <p className="text-sm text-red-100">{error}</p> : null}
+      {saved ? <p className="text-sm text-green-100">Saved to Firebase.</p> : null}
     </main>
   );
 }
-
