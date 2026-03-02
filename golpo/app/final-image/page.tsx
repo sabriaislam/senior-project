@@ -48,24 +48,33 @@ export default function FinalImagePage() {
   }, []);
 
   return (
-    <main className="mx-auto flex min-h-screen w-full max-w-6xl flex-col justify-center gap-6 px-6 py-10">
-      <div className="space-y-2">
+    <main className="print-page mx-auto flex min-h-screen w-full max-w-6xl flex-col justify-center gap-6 px-6 py-10">
+      <div className="no-print space-y-2">
         <p className="text-sm uppercase tracking-[0.18em] opacity-80">Step 6</p>
         <h1 className="font-instrument text-4xl leading-tight md:text-5xl">Final Image</h1>
       </div>
 
-      <FinalImageOption1 data={data} />
+      <div className="print-card-wrap">
+        <FinalImageOption1 data={data} />
+      </div>
 
-      <div className="flex items-center gap-3">
+      <div className="no-print flex items-center gap-3">
         <Link
           href="/photobooth"
           className="inline-flex rounded-full border border-black/20 bg-black/5 px-5 py-2.5 text-sm font-semibold transition hover:bg-black/10"
         >
           Back
         </Link>
+        <button
+          type="button"
+          onClick={() => window.print()}
+          className="inline-flex rounded-full border border-black/20 bg-black/10 px-5 py-2.5 text-sm font-semibold transition hover:bg-black/20"
+        >
+          Print Postcard
+        </button>
       </div>
 
-      {isLoading ? <p className="text-sm text-white/80">Loading final image...</p> : null}
+      {isLoading ? <p className="no-print text-sm text-white/80">Loading final image...</p> : null}
     </main>
   );
 }

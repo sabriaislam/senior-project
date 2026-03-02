@@ -41,3 +41,86 @@ body {
 .hide-scrollbar::-webkit-scrollbar {
   display: none;
 }
+
+@media print {
+  @page {
+    size: landscape;
+    margin: 0;
+  }
+
+  html,
+  body {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+  }
+
+  :root {
+    --background: #ffffff;
+    --foreground: #171717;
+  }
+
+  body {
+    background: #ffffff;
+    color: #171717;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  .print-page {
+    position: fixed !important;
+    inset: 0;
+    width: auto !important;
+    min-height: auto !important;
+    max-width: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    display: block !important;
+    overflow: hidden;
+  }
+
+  .print-card-wrap {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    padding: 0.1in;
+    box-sizing: border-box;
+    margin: 0 !important;
+    overflow: hidden;
+  }
+
+  .print-card-image,
+  .print-card-placeholder {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    height: auto;
+    max-height: 100%;
+    aspect-ratio: 852 / 558;
+    object-fit: contain;
+  }
+
+  .print-card-placeholder {
+    background: #d9d9d9;
+  }
+}
+
+.print-card-wrap {
+  width: 100%;
+  max-width: 852px;
+}
+
+.print-card-image,
+.print-card-placeholder {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 852 / 558;
+  object-fit: contain;
+}
