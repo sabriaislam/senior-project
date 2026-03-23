@@ -240,7 +240,7 @@ export default function PhotoboothPage() {
     <main className="mx-auto flex min-h-screen w-full max-w-5xl flex-col justify-center gap-8 px-6 py-12">
       <div className="space-y-3">
         <p className="text-sm uppercase tracking-[0.18em] opacity-80">Step 5</p>
-        <h1 className="font-instrument text-4xl leading-tight md:text-5xl">Photobooth</h1>
+        <h1 className="font-average text-4xl leading-tight md:text-5xl">Photobooth</h1>
         <p className="max-w-2xl opacity-90">
           Camera access starts immediately. Start your first try, review the photos, then decide to
           continue or redo once.

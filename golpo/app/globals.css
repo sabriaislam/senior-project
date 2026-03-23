@@ -8,16 +8,18 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-ppmori: var(--font-ppmori);
-  --font-instrument: var(--font-instrument);
+  --font-vollkorn: var(--font-vollkorn);
+  --font-average: var(--font-average);
 }
 
-.font-instrument {
-  font-family: var(--font-instrument), serif;
+.font-average {
+  font-family: var(--font-vollkorn), serif;
+  font-weight: 700;
+  letter-spacing: -0.05em;
 }
 
-.font-ppmori {
-  font-family: var(--font-ppmori), sans-serif;
+.font-vollkorn {
+  font-family: var(--font-vollkorn), sans-serif;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -30,7 +32,7 @@
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-ppmori), sans-serif;
+  font-family: var(--font-average), sans-serif;
 }
 
 .hide-scrollbar {

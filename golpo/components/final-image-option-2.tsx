@@ -1,15 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { type FinalImageData } from "./final-image-option-1";
 
-export type FinalImageData = {
-  chosenQuestion: string;
-  answerText: string;
-  name: string;
-  pics: [string | null, string | null, string | null];
-};
-
-type FinalImageOption1Props = {
+type FinalImageOption2Props = {
   data: FinalImageData;
   onImageReady?: (dataUrl: string) => void;
 };
@@ -26,10 +20,10 @@ const PHOTO_GAP = 14;
 const PHOTO_WIDTH = 184;
 const PHOTO_HEIGHT = Math.floor((CARD_HEIGHT - PADDING - BOTTOM_SAFE - PHOTO_GAP * 2) / 3);
 const COLUMN_GAP = 40;
-// Photos LEFT, text RIGHT
-const PHOTO_X = PADDING;
-const COPY_X = PADDING + PHOTO_WIDTH + COLUMN_GAP;
-const COPY_WIDTH = CARD_WIDTH - COPY_X - 40;
+// Text LEFT, photos RIGHT
+const COPY_X = PADDING;
+const PHOTO_X = CARD_WIDTH - PADDING - PHOTO_WIDTH;
+const COPY_WIDTH = PHOTO_X - COLUMN_GAP - COPY_X;
 const QUESTION_TOP = 66;
 const QUESTION_FONT_SIZE = 30;
 const QUESTION_MIN_FONT_SIZE = 18;
@@ -169,7 +163,7 @@ function drawCoverImage(
   ctx.drawImage(image, x + (width - scaledWidth) / 2, y + (height - scaledHeight) / 2, scaledWidth, scaledHeight);
 }
 
-export default function FinalImageOption1({ data, onImageReady }: FinalImageOption1Props) {
+export default function FinalImageOption2({ data, onImageReady }: FinalImageOption2Props) {
   const [imageSrc, setImageSrc] = useState<string | null>(null);
 
   useEffect(() => {
@@ -200,7 +194,7 @@ export default function FinalImageOption1({ data, onImageReady }: FinalImageOpti
         ...data.pics.map((pic) => (pic ? loadImage(pic) : Promise.resolve(null))),
       ]);
 
-      // Draw photos (left column)
+      // Draw photos (right column)
       photoImages.forEach((image, index) => {
         const x = PHOTO_X;
         const y = PADDING + index * (PHOTO_HEIGHT + PHOTO_GAP);
@@ -243,18 +237,18 @@ export default function FinalImageOption1({ data, onImageReady }: FinalImageOpti
         cursorY += copyLayout.answerLineHeight;
       }
 
-      // Name (bottom-left of text column)
-      ctx.fillStyle = ANSWER_COLOR;
-      ctx.font = `700 14px "Vollkorn", Georgia, serif`;
-      ctx.textAlign = "left";
-      ctx.fillText(data.name || "Anonymous", COPY_X, NAME_Y);
-
-      // Logo image (bottom-right)
+      // Logo image (bottom-left)
       if (logoImage) {
         const logoW = Math.round(LOGO_TARGET_HEIGHT * (logoImage.naturalWidth / logoImage.naturalHeight));
-        const logoX = CARD_WIDTH - PADDING - logoW;
-        ctx.drawImage(logoImage, logoX, LOGO_Y - LOGO_TARGET_HEIGHT, logoW, LOGO_TARGET_HEIGHT);
+        ctx.drawImage(logoImage, COPY_X, LOGO_Y - LOGO_TARGET_HEIGHT, logoW, LOGO_TARGET_HEIGHT);
       }
+
+      // Name (bottom-right of text column)
+      ctx.fillStyle = ANSWER_COLOR;
+      ctx.font = `700 14px "Vollkorn", Georgia, serif`;
+      ctx.textAlign = "right";
+      ctx.fillText(data.name || "Anonymous", COPY_X + COPY_WIDTH, NAME_Y);
+      ctx.textAlign = "left";
 
       if (!active) return;
       const dataUrl = canvas.toDataURL("image/png");
@@ -277,7 +271,7 @@ export default function FinalImageOption1({ data, onImageReady }: FinalImageOpti
   return (
     <div className="print-card-wrap">
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={imageSrc} alt="Final postcard option 1" className="print-card-image" />
+      <img src={imageSrc} alt="Final postcard option 2" className="print-card-image" />
     </div>
   );
 }

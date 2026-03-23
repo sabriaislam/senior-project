@@ -88,7 +88,7 @@ export default function AnswerPage() {
     <main className="mx-auto flex min-h-screen w-full max-w-3xl flex-col justify-center gap-8 px-6 py-12">
       <div className="space-y-3">
         <p className="text-sm uppercase tracking-[0.18em] opacity-80">Step 4</p>
-        <h1 className="font-instrument text-3xl leading-tight md:text-4xl">{question}</h1>
+        <h1 className="font-average text-3xl leading-tight md:text-4xl">{question}</h1>
         <p className="max-w-2xl opacity-90">Write your response in 200 words or fewer.</p>
       </div>
 

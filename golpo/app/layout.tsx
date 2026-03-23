@@ -1,27 +1,18 @@
 import type { Metadata } from "next";
-import localFont from "next/font/local";
+import { Vollkorn, Average } from "next/font/google";
 import "./globals.css";
 
-const ppmori = localFont({
-  variable: "--font-ppmori",
-  src: [
-    { path: "../public/fonts/PPMori-Extralight.otf", weight: "200", style: "normal" },
-    { path: "../public/fonts/PPMori-ExtralightItalic.otf", weight: "200", style: "italic" },
-    { path: "../public/fonts/PPMori-Regular.otf", weight: "400", style: "normal" },
-    { path: "../public/fonts/PPMori-Italic.otf", weight: "400", style: "italic" },
-    { path: "../public/fonts/PPMori-Semibold.otf", weight: "600", style: "normal" },
-    { path: "../public/fonts/PPMori-SemiboldItalic.otf", weight: "600", style: "italic" },
-    { path: "../public/fonts/PPMori-Black.otf", weight: "900", style: "normal" },
-    { path: "../public/fonts/PPMori-BlackItalic.otf", weight: "900", style: "italic" },
-  ],
+const vollkorn = Vollkorn({
+  variable: "--font-vollkorn",
+  subsets: ["latin"],
+  weight: ["400", "600", "700", "900"],
+  style: ["normal", "italic"],
 });
 
-const instrument = localFont({
-  variable: "--font-instrument",
-  src: [
-    { path: "../public/fonts/InstrumentSerif-Regular.ttf", weight: "400", style: "normal" },
-    { path: "../public/fonts/InstrumentSerif-Italic.ttf", weight: "400", style: "italic" },
-  ],
+const average = Average({
+  variable: "--font-average",
+  subsets: ["latin"],
+  weight: "400",
 });
 
 export const metadata: Metadata = {
@@ -37,7 +28,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${ppmori.variable} ${instrument.variable} antialiased`}
+        className={`${vollkorn.variable} ${average.variable} antialiased`}
       >
         {children}
       </body>

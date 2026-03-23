@@ -5,23 +5,15 @@ import { useMemo, useState } from "react";
 import { updateUserDb } from "@/lib/firebase/user-db";
 
 const QUESTIONS = [
-  "What is the story behind your name?",
-  "Who is someone who made you feel comfortable unexpectedly?",
-  "Who was the first person who showed you what kindness looks like?",
-  "Where is the first place that felt like home?",
-  "What's a story you want to pass on?",
-  "What word doesn’t exist in English but lives in you?",
-  "When did you start recognizing yourself?",
-  "What is something that you get yourself to throw out?",
-  "What habit feels inherited?",
-  "What did you believe about yourself as a child?",
-  "What’s a meal you’ll never forget?",
-  "Who do you feel most yourself around?",
-  "What do you dream about most?",
-  "When do you feel most connected to your roots?",
-  "What do you want to do differently from the generation before you?",
-  "What is a sound that reminds you of where your family comes from?",
-  "Who makes you laugh most?",
+  "Tell me a time you tried to say a phrase from your native language in English, but it didn’t translate well",
+  "Tell me about a friend who makes you feel at home",
+  "Tell me about the moment you realized you’re breaking a negative cycle",
+  "Tell me about the greatest compliment you’ve been given, and who gave it",
+  "Tell me about a family tradition you’ll never stop doing",
+  "Tell me what your childhood home looked like",
+  "Teach me your favorite phrase in your native language and use it in a sentence",
+  "What is the story behind something you own that you can’t get yourself to throw out",
+  "Tell me why you love your favorite song and what memory you associate it with",
 ];
 
 const ITEM_HEIGHT = 88;
@@ -66,7 +58,7 @@ export default function QuestionsPage() {
     <main className="mx-auto flex min-h-screen w-full max-w-4xl flex-col justify-center gap-8 px-6 py-12">
       <div className="space-y-3">
         <p className="text-sm uppercase tracking-[0.18em] opacity-80">Step 2</p>
-        <h1 className="font-instrument text-4xl leading-tight md:text-5xl">Choose a Question</h1>
+        <h1 className="font-average text-4xl leading-tight md:text-5xl">Choose a Question</h1>
       </div>
 
       <section className="relative">
