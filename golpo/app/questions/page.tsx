@@ -7,13 +7,10 @@ import { useRouter } from "next/navigation";
 
 
 const QUESTIONS = [
-  "Tell me a time you tried to say a phrase from your native language in English, but it didn't translate well",
+  "Tell me a phrase from your native language, that doesn’t quite translate well in English. What does it mean?",
   "Tell me about a friend who makes you feel at home",
-  "Tell me about the moment you realized you're breaking a negative cycle",
   "Tell me about the greatest compliment you've been given, and who gave it",
   "Tell me about a family tradition you'll never stop doing",
-  "Tell me what your childhood home looked like",
-  "Teach me your favorite phrase in your native language and use it in a sentence",
   "What is the story behind something you own that you can't get yourself to throw out",
   "Tell me why you love your favorite song and what memory you associate it with",
 ];

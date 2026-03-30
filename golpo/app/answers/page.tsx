@@ -30,7 +30,7 @@ export default function AnswersPage() {
     <main className="mx-auto flex min-h-screen w-full max-w-5xl flex-col gap-8 px-6 py-12">
       {/* Logo */}
       <div className="flex justify-center">
-        <Image src="/GOLPO-BLACK.png" alt="Golpo" width={120} height={50} style={{ objectFit: "contain" }} />
+        <Image src="/GOLPO-BLACK.svg" alt="Golpo" width={120} height={50} style={{ objectFit: "contain" }} />
       </div>
 
       {isLoading && <p className="text-center text-sm opacity-60">Loading responses...</p>}

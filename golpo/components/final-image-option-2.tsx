@@ -18,7 +18,7 @@ const PADDING = 38;
 const BOTTOM_SAFE = 38;
 const PHOTO_GAP = 14;
 const PHOTO_WIDTH = 184;
-const PHOTO_HEIGHT = Math.floor((CARD_HEIGHT - PADDING - BOTTOM_SAFE - PHOTO_GAP * 2) / 3);
+const PHOTO_HEIGHT = Math.floor((CARD_HEIGHT - PADDING - BOTTOM_SAFE - PHOTO_GAP * 3) / 4);
 const COLUMN_GAP = 40;
 // Text LEFT, photos RIGHT
 const COPY_X = PADDING;
@@ -190,7 +190,7 @@ export default function FinalImageOption2({ data, onImageReady }: FinalImageOpti
 
       // Load photos + logo in parallel
       const [logoImage, ...photoImages] = await Promise.all([
-        loadImage("/GOLPO-BLACK.png"),
+        loadImage("/GOLPO-BLACK.svg"),
         ...data.pics.map((pic) => (pic ? loadImage(pic) : Promise.resolve(null))),
       ]);
 

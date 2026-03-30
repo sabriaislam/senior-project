@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { getUserDb, updateUserDb } from "@/lib/firebase/user-db";
 
-const MAX_WORDS = 200;
+const MAX_WORDS = 100;
 
 function countWords(value: string) {
   return value.trim().split(/\s+/).filter(Boolean).length;
@@ -118,14 +118,6 @@ export default function AnswerPage() {
         >
           Back
         </Link>
-        <button
-          type="button"
-          onClick={() => void saveAnswer()}
-          disabled={isSaving || isOverLimit}
-          className="inline-flex rounded-full border border-black/20 bg-black/10 px-5 py-2.5 text-sm font-semibold transition hover:bg-black/20 disabled:cursor-not-allowed disabled:opacity-60"
-        >
-          {isSaving ? "Saving..." : "Save Answer"}
-        </button>
         <button
           type="button"
           onClick={() => void handleNext()}

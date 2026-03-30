@@ -3,21 +3,19 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import FinalImageOption1, { type FinalImageData } from "@/components/final-image-option-1";
-import FinalImageOption2 from "@/components/final-image-option-2";
 import { getUserDb } from "@/lib/firebase/user-db";
 
 const DEFAULT_DATA: FinalImageData = {
   chosenQuestion: "No question selected yet.",
   answerText: "No answer saved yet.",
   name: "Anonymous",
-  pics: [null, null, null],
+  pics: [null, null, null, null],
 };
 
 export default function FinalImagePage() {
   const [data, setData] = useState<FinalImageData>(DEFAULT_DATA);
   const [isLoading, setIsLoading] = useState(true);
-  const [cardImageUrl1, setCardImageUrl1] = useState<string | null>(null);
-  const [cardImageUrl2, setCardImageUrl2] = useState<string | null>(null);
+  const [cardImageUrl, setCardImageUrl] = useState<string | null>(null);
 
   function printImage(dataUrl: string) {
     const style = document.createElement("style");
@@ -47,7 +45,6 @@ export default function FinalImagePage() {
   }
 
   const [email, setEmail] = useState("");
-  const [selectedOption, setSelectedOption] = useState<1 | 2>(1);
   const [isSending, setIsSending] = useState(false);
   const [sendError, setSendError] = useState<string | null>(null);
   const [sendSuccess, setSendSuccess] = useState(false);
@@ -63,7 +60,7 @@ export default function FinalImagePage() {
           chosenQuestion: doc?.chosenQuestion ?? DEFAULT_DATA.chosenQuestion,
           answerText: doc?.answerText ?? DEFAULT_DATA.answerText,
           name: doc?.name ?? DEFAULT_DATA.name,
-          pics: [doc?.pic01 ?? null, doc?.pic02 ?? null, doc?.pic03 ?? null],
+          pics: [doc?.pic01 ?? null, doc?.pic02 ?? null, doc?.pic03 ?? null, doc?.pic04 ?? null],
         });
       } catch (err) {
         console.error("Failed to load final image data:", err);
@@ -87,8 +84,7 @@ export default function FinalImagePage() {
       return;
     }
 
-    const activeImageUrl = selectedOption === 1 ? cardImageUrl1 : cardImageUrl2;
-    if (!activeImageUrl) {
+    if (!cardImageUrl) {
       setSendError("Image is still rendering, please wait a moment.");
       return;
     }
@@ -99,7 +95,7 @@ export default function FinalImagePage() {
       const response = await fetch("/api/send-email", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: email.trim(), name: data.name, imageDataUrl: activeImageUrl }),
+        body: JSON.stringify({ email: email.trim(), name: data.name, imageDataUrl: cardImageUrl }),
       });
 
       if (!response.ok) {
@@ -129,34 +125,18 @@ export default function FinalImagePage() {
         <h1 className="font-average text-4xl leading-tight md:text-5xl">Final Image</h1>
       </div>
 
-      {/* Options side by side */}
-      <div className="grid grid-cols-2 gap-6">
-        <div className="space-y-3">
-          <p className="text-sm font-semibold uppercase tracking-widest opacity-60">Option 01 — Photos Left</p>
-          <FinalImageOption1 data={data} onImageReady={setCardImageUrl1} />
-          <button
-            type="button"
-            onClick={() => { setSelectedOption(1); if (cardImageUrl1) printImage(cardImageUrl1); }}
-            className="inline-flex rounded-full border border-black/20 bg-black/10 px-5 py-2.5 text-sm font-semibold transition hover:bg-black/20"
-          >
-            Print Option 01
-          </button>
-        </div>
-
-        <div className="space-y-3">
-          <p className="text-sm font-semibold uppercase tracking-widest opacity-60">Option 02 — Photos Right</p>
-          <FinalImageOption2 data={data} onImageReady={setCardImageUrl2} />
-          <button
-            type="button"
-            onClick={() => { setSelectedOption(2); if (cardImageUrl2) printImage(cardImageUrl2); }}
-            className="inline-flex rounded-full border border-black/20 bg-black/10 px-5 py-2.5 text-sm font-semibold transition hover:bg-black/20"
-          >
-            Print Option 02
-          </button>
-        </div>
+      <div className="space-y-4">
+        <FinalImageOption1 data={data} onImageReady={setCardImageUrl} />
+        <button
+          type="button"
+          onClick={() => { if (cardImageUrl) printImage(cardImageUrl); }}
+          disabled={!cardImageUrl}
+          className="inline-flex rounded-full border border-black/20 bg-black/10 px-5 py-2.5 text-sm font-semibold transition hover:bg-black/20 disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          Print
+        </button>
       </div>
 
-      {/* Nav + email */}
       <div className="flex items-center gap-3">
         <Link
           href="/photobooth"
@@ -167,12 +147,7 @@ export default function FinalImagePage() {
       </div>
 
       <div className="space-y-3">
-        <p className="text-sm font-semibold">
-          Email your postcard{" "}
-          <span className="opacity-60">
-            (sending Option 0{selectedOption} — click a Print button first to select)
-          </span>
-        </p>
+        <p className="text-sm font-semibold">Email your postcard</p>
         <form onSubmit={(e) => void handleSendEmail(e)} className="flex items-center gap-3">
           <input
             type="email"
@@ -187,7 +162,7 @@ export default function FinalImagePage() {
           />
           <button
             type="submit"
-            disabled={isSending || (!cardImageUrl1 && !cardImageUrl2)}
+            disabled={isSending || !cardImageUrl}
             className="inline-flex rounded-full border border-black/20 bg-black/10 px-5 py-2.5 text-sm font-semibold transition hover:bg-black/20 disabled:cursor-not-allowed disabled:opacity-60"
           >
             {isSending ? "Sending..." : "Send"}
