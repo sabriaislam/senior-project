@@ -3,262 +3,245 @@
 import { useEffect, useState } from "react";
 import { type FinalImageData } from "./final-image-option-1";
 
-type FinalImageOption2Props = {
+type Props = {
   data: FinalImageData;
   onImageReady?: (dataUrl: string) => void;
+  isSelected?: boolean; // ← for print selection
 };
 
-const CARD_WIDTH = 852;
-const CARD_HEIGHT = 558;
-const RENDER_SCALE = 3;
-const BACKGROUND = "#d9d9d9";
-const QUESTION_COLOR = "#3d6b3d";
-const ANSWER_COLOR = "#1a1a1a";
-const PADDING = 38;
-const BOTTOM_SAFE = 38;
-const PHOTO_GAP = 14;
-const PHOTO_WIDTH = 184;
-const PHOTO_HEIGHT = Math.floor((CARD_HEIGHT - PADDING - BOTTOM_SAFE - PHOTO_GAP * 3) / 4);
-const COLUMN_GAP = 40;
-// Text LEFT, photos RIGHT
-const COPY_X = PADDING;
-const PHOTO_X = CARD_WIDTH - PADDING - PHOTO_WIDTH;
-const COPY_WIDTH = PHOTO_X - COLUMN_GAP - COPY_X;
-const QUESTION_TOP = 66;
-const QUESTION_FONT_SIZE = 30;
-const QUESTION_MIN_FONT_SIZE = 18;
-const QUESTION_MAX_LINES = 3;
-const COPY_GAP = 8;
-const ANSWER_MIN_FONT_SIZE = 9;
-const ANSWER_MAX_FONT_SIZE = 17;
-const ANSWER_MIN_TOP = 104;
-const ANSWER_BOTTOM = 470;
-const NAME_Y = 515;
-const LOGO_TARGET_HEIGHT = 30;
-const LOGO_Y = CARD_HEIGHT - 28;
+const CARD_W = 916;
+const CARD_H = 600;
+const RENDER_SCALE = 2;
 
-function wrapText(
-  ctx: CanvasRenderingContext2D,
-  value: string,
-  maxWidth: number,
-  maxLines: number,
-  withEllipsis = true,
-) {
-  const words = value.trim().split(/\s+/).filter(Boolean);
-  if (!words.length) return { lines: [""], truncated: false };
+const BG = "#F0F0F0";
 
-  const lines: string[] = [];
-  let current = "";
-  let truncated = false;
+// Panel
+const PANEL_X = 517.5;
+const PANEL_Y = 100;
+const PANEL_W = 330;
+const PANEL_H = 407;
 
-  for (const word of words) {
-    const candidate = current ? `${current} ${word}` : word;
-    if (ctx.measureText(candidate).width <= maxWidth) {
-      current = candidate;
-      continue;
-    }
-    if (current) {
-      lines.push(current);
-      current = word;
-    } else {
-      lines.push(word);
-      current = "";
-    }
-    if (lines.length === maxLines) {
-      truncated = true;
-      break;
-    }
-  }
+// Photos
+const PHOTOS = [
+  { x: 526.5, y: 133.5, w: 147, h: 147 },
+  { x: 691.5, y: 133.5, w: 147, h: 147 },
+  { x: 526.5, y: 299.5, w: 147, h: 147 },
+  { x: 691.5, y: 299.5, w: 147, h: 147 },
+];
 
-  if (lines.length < maxLines && current) {
-    lines.push(current);
-  } else if (current) {
-    truncated = true;
-  }
+// Text
+const TEXT_LEFT = 59;
+const TEXT_RIGHT_MARGIN = 32;
+const TEXT_WIDTH = PANEL_X - TEXT_RIGHT_MARGIN - TEXT_LEFT;
 
-  if (lines.length > maxLines) {
-    lines.length = maxLines;
-    truncated = true;
-  }
+const TITLE_SIZE = 36;
+const BYLINE_SIZE = 14;
+const BODY_SIZE = 13;
+const BODY_LINE_H = 18;
 
-  if (withEllipsis && truncated && lines.length) {
-    let lastLine = lines[maxLines - 1] ?? "";
-    while (lastLine && ctx.measureText(`${lastLine}...`).width > maxWidth) {
-      lastLine = lastLine.slice(0, -1).trimEnd();
-    }
-    lines[maxLines - 1] = lastLine ? `${lastLine}...` : "...";
-  }
-
-  return { lines, truncated };
-}
-
-function fitCopyLayout(
-  ctx: CanvasRenderingContext2D,
-  question: string,
-  answer: string,
-  maxWidth: number,
-) {
-  for (let questionFontSize = QUESTION_FONT_SIZE; questionFontSize >= QUESTION_MIN_FONT_SIZE; questionFontSize -= 2) {
-    const questionLineHeight = Math.round(questionFontSize * 1.08);
-    ctx.font = `700 ${questionFontSize}px "Vollkorn", Georgia, serif`;
-    const questionLayout = wrapText(ctx, question, maxWidth, QUESTION_MAX_LINES, false);
-
-    if (questionLayout.truncated) continue;
-
-    const answerTop = Math.max(
-      ANSWER_MIN_TOP,
-      QUESTION_TOP + questionLayout.lines.length * questionLineHeight + COPY_GAP,
-    );
-    const availableHeight = ANSWER_BOTTOM - answerTop;
-    if (availableHeight < ANSWER_MIN_FONT_SIZE) continue;
-
-    for (let answerFontSize = ANSWER_MAX_FONT_SIZE; answerFontSize >= ANSWER_MIN_FONT_SIZE; answerFontSize -= 1) {
-      const answerLineHeight = Math.round(answerFontSize * 1.18);
-      const maxLines = Math.max(1, Math.floor(availableHeight / answerLineHeight));
-      ctx.font = `${answerFontSize}px "Average", Georgia, serif`;
-      const answerLayout = wrapText(ctx, answer, maxWidth, maxLines, false);
-
-      if (!answerLayout.truncated) {
-        return { questionFontSize, questionLineHeight, questionLines: questionLayout.lines, answerFontSize, answerLineHeight, answerLines: answerLayout.lines, answerTop };
-      }
-    }
-  }
-
-  const questionFontSize = QUESTION_MIN_FONT_SIZE;
-  const questionLineHeight = Math.round(questionFontSize * 1.08);
-  ctx.font = `700 ${questionFontSize}px "Vollkorn", Georgia, serif`;
-  const fallbackQuestion = wrapText(ctx, question, maxWidth, QUESTION_MAX_LINES, true);
-  const answerTop = Math.max(ANSWER_MIN_TOP, QUESTION_TOP + fallbackQuestion.lines.length * questionLineHeight + COPY_GAP);
-  const availableHeight = Math.max(ANSWER_MIN_FONT_SIZE, ANSWER_BOTTOM - answerTop);
-  const answerFontSize = ANSWER_MIN_FONT_SIZE;
-  const answerLineHeight = Math.round(answerFontSize * 1.18);
-  const maxLines = Math.max(1, Math.floor(availableHeight / answerLineHeight));
-  ctx.font = `${answerFontSize}px "Average", Georgia, serif`;
-  const fallbackAnswer = wrapText(ctx, answer, maxWidth, maxLines, true);
-
-  return { questionFontSize, questionLineHeight, questionLines: fallbackQuestion.lines, answerFontSize, answerLineHeight, answerLines: fallbackAnswer.lines, answerTop };
-}
-
-function loadImage(src: string) {
-  return new Promise<HTMLImageElement | null>((resolve) => {
-    const image = new Image();
-    image.crossOrigin = "anonymous";
-    image.onload = () => resolve(image);
-    image.onerror = () => resolve(null);
-    image.src = src;
+function loadImage(src: string): Promise<HTMLImageElement | null> {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => resolve(img);
+    img.onerror = () => resolve(null);
+    img.src = src;
   });
 }
 
-function drawCoverImage(
+function drawCover(
   ctx: CanvasRenderingContext2D,
-  image: CanvasImageSource,
-  x: number, y: number, width: number, height: number,
+  img: HTMLImageElement,
+  x: number,
+  y: number,
+  w: number,
+  h: number
 ) {
-  const imageWidth = (image as HTMLImageElement).naturalWidth || (image as HTMLImageElement).width;
-  const imageHeight = (image as HTMLImageElement).naturalHeight || (image as HTMLImageElement).height;
-  if (!imageWidth || !imageHeight) return;
-  const scale = Math.max(width / imageWidth, height / imageHeight);
-  const scaledWidth = imageWidth * scale;
-  const scaledHeight = imageHeight * scale;
-  ctx.drawImage(image, x + (width - scaledWidth) / 2, y + (height - scaledHeight) / 2, scaledWidth, scaledHeight);
+  const iw = img.naturalWidth || img.width;
+  const ih = img.naturalHeight || img.height;
+  if (!iw || !ih) return;
+
+  const scale = Math.max(w / iw, h / ih);
+
+  ctx.drawImage(
+    img,
+    x + (w - iw * scale) / 2,
+    y + (h - ih * scale) / 2,
+    iw * scale,
+    ih * scale
+  );
 }
 
-export default function FinalImageOption2({ data, onImageReady }: FinalImageOption2Props) {
+function wrapText(
+  ctx: CanvasRenderingContext2D,
+  text: string,
+  maxWidth: number,
+  lineHeight: number,
+  maxLines: number
+) {
+  const words = text.split(" ");
+  const lines: string[] = [];
+  let line = "";
+
+  for (const word of words) {
+    const test = line ? line + " " + word : word;
+    if (ctx.measureText(test).width > maxWidth) {
+      lines.push(line);
+      line = word;
+      if (lines.length >= maxLines) break;
+    } else {
+      line = test;
+    }
+  }
+
+  if (line && lines.length < maxLines) lines.push(line);
+  return lines;
+}
+
+export default function FinalImageOption2({
+  data,
+  onImageReady,
+  isSelected,
+}: Props) {
   const [imageSrc, setImageSrc] = useState<string | null>(null);
 
   useEffect(() => {
     let active = true;
 
-    async function renderCard() {
+    async function render() {
       const canvas = document.createElement("canvas");
-      canvas.width = CARD_WIDTH * RENDER_SCALE;
-      canvas.height = CARD_HEIGHT * RENDER_SCALE;
+      canvas.width = CARD_W * RENDER_SCALE;
+      canvas.height = CARD_H * RENDER_SCALE;
+
       const ctx = canvas.getContext("2d");
       if (!ctx) return;
 
       ctx.setTransform(RENDER_SCALE, 0, 0, RENDER_SCALE, 0, 0);
-      ctx.imageSmoothingEnabled = true;
-      ctx.imageSmoothingQuality = "high";
 
       if (document.fonts) {
-        try { await document.fonts.ready; } catch { /* non-blocking */ }
+        try {
+          await document.fonts.ready;
+        } catch {}
       }
 
       // Background
-      ctx.fillStyle = BACKGROUND;
-      ctx.fillRect(0, 0, CARD_WIDTH, CARD_HEIGHT);
+      ctx.fillStyle = BG;
+      ctx.fillRect(0, 0, CARD_W, CARD_H);
 
-      // Load photos + logo in parallel
-      const [logoImage, ...photoImages] = await Promise.all([
-        loadImage("/GOLPO-BLACK.svg"),
-        ...data.pics.map((pic) => (pic ? loadImage(pic) : Promise.resolve(null))),
+      // Panel
+      ctx.fillStyle = "#000";
+      ctx.fillRect(PANEL_X, PANEL_Y, PANEL_W, PANEL_H);
+
+      ctx.lineWidth = 20;
+      ctx.strokeStyle = "#000";
+      ctx.strokeRect(PANEL_X, PANEL_Y, PANEL_W, PANEL_H);
+
+      // Load images
+      const [logo, ...imgs] = await Promise.all([
+        loadImage("/GOLPO-WHITE.svg"),
+        ...data.pics.map((p) => (p ? loadImage(p) : Promise.resolve(null))),
       ]);
 
-      // Draw photos (right column)
-      photoImages.forEach((image, index) => {
-        const x = PHOTO_X;
-        const y = PADDING + index * (PHOTO_HEIGHT + PHOTO_GAP);
-        if (!image) {
-          ctx.fillStyle = "#b8b8b8";
-          ctx.fillRect(x, y, PHOTO_WIDTH, PHOTO_HEIGHT);
-          return;
-        }
+      // Draw photos
+      PHOTOS.forEach((pos, i) => {
         ctx.save();
         ctx.beginPath();
-        ctx.rect(x, y, PHOTO_WIDTH, PHOTO_HEIGHT);
+        ctx.rect(pos.x, pos.y, pos.w, pos.h);
         ctx.clip();
-        drawCoverImage(ctx, image, x, y, PHOTO_WIDTH, PHOTO_HEIGHT);
+
+        if (imgs[i]) {
+          drawCover(ctx, imgs[i]!, pos.x, pos.y, pos.w, pos.h);
+        } else {
+          ctx.fillStyle = "#646464";
+          ctx.fillRect(pos.x, pos.y, pos.w, pos.h);
+        }
+
         ctx.restore();
       });
 
-      const copyLayout = fitCopyLayout(
+      // Logo
+      if (logo) {
+        const logoW = 50;
+        // Calculate height based on natural aspect ratio to prevent stretching
+        const logoH = (logo.naturalHeight / logo.naturalWidth) * logoW;
+
+        // 1. Horizontal Center: 
+        // Middle of the black panel minus half the logo width
+        const logoX = PANEL_X + (PANEL_W - logoW) / 2;
+
+        // 2. Vertical Alignment:
+        // We want it centered in the gap between the bottom of the last photo and the bottom of the panel.
+        const bottomPhotoY = PHOTOS[2].y; // Y of the bottom row
+        const bottomPhotoH = PHOTOS[2].h;
+        const bottomOfPhotos = bottomPhotoY + bottomPhotoH;
+        const bottomOfPanel = PANEL_Y + PANEL_H;
+        
+        const availableGap = bottomOfPanel - bottomOfPhotos;
+        
+        // Center the logo inside that specific gap
+        const logoY = bottomOfPhotos + (availableGap - logoH) / 2;
+
+        ctx.drawImage(logo, logoX, logoY, logoW, logoH);
+      }
+
+      // TEXT
+      // --- TEXT RENDERING SECTION ---
+      // --- Standardized Text Section for Option 02 ---
+      let cursorY = PANEL_Y; // Should be 100
+
+      ctx.textBaseline = "top";
+      ctx.font = `800 ${TITLE_SIZE}px Helvetica, Arial, sans-serif`;
+
+      const titleLines = wrapText(ctx, data.storyCategory.toLowerCase(), TEXT_WIDTH, TITLE_SIZE, 3);
+      titleLines.forEach((line) => {
+        ctx.fillText(line, TEXT_LEFT, cursorY);
+        cursorY += TITLE_SIZE + 4; 
+      });
+
+      // Title to Name Gap
+      cursorY += 10; 
+
+      // Byline
+      ctx.font = `${BYLINE_SIZE}px Helvetica, Arial, sans-serif`;
+      ctx.fillStyle = "#555";
+      ctx.fillText(`by ${data.name || "Anonymous"}`, TEXT_LEFT, cursorY);
+
+      // Name to Body Gap
+      cursorY += BYLINE_SIZE + 24;
+      // Body
+      ctx.font = `${BODY_SIZE}px Helvetica, Arial, sans-serif`;
+      ctx.fillStyle = "#333";
+
+      // Recalculate max lines based on remaining space
+      const remainingHeight = (PANEL_Y + PANEL_H) - cursorY;
+      const maxLines = Math.floor(remainingHeight / BODY_LINE_H);
+
+      const bodyLines = wrapText(
         ctx,
-        data.chosenQuestion || "No question selected yet.",
-        data.answerText || "No answer saved yet.",
-        COPY_WIDTH,
+        data.answerText || "",
+        TEXT_WIDTH,
+        BODY_LINE_H,
+        maxLines
       );
 
-      // Question (green, Vollkorn bold)
-      ctx.fillStyle = QUESTION_COLOR;
-      ctx.textBaseline = "alphabetic";
-      ctx.font = `700 ${copyLayout.questionFontSize}px "Vollkorn", Georgia, serif`;
-      let cursorY = QUESTION_TOP;
-      for (const line of copyLayout.questionLines) {
-        ctx.fillText(line, COPY_X, cursorY);
-        cursorY += copyLayout.questionLineHeight;
-      }
-
-      // Answer (dark, Average)
-      ctx.fillStyle = ANSWER_COLOR;
-      ctx.font = `${copyLayout.answerFontSize}px "Average", Georgia, serif`;
-      cursorY = copyLayout.answerTop;
-      for (const line of copyLayout.answerLines) {
-        ctx.fillText(line, COPY_X, cursorY);
-        cursorY += copyLayout.answerLineHeight;
-      }
-
-      // Logo image (bottom-left)
-      if (logoImage) {
-        const logoW = Math.round(LOGO_TARGET_HEIGHT * (logoImage.naturalWidth / logoImage.naturalHeight));
-        ctx.drawImage(logoImage, COPY_X, LOGO_Y - LOGO_TARGET_HEIGHT, logoW, LOGO_TARGET_HEIGHT);
-      }
-
-      // Name (bottom-right of text column)
-      ctx.fillStyle = ANSWER_COLOR;
-      ctx.font = `700 14px "Vollkorn", Georgia, serif`;
-      ctx.textAlign = "right";
-      ctx.fillText(data.name || "Anonymous", COPY_X + COPY_WIDTH, NAME_Y);
-      ctx.textAlign = "left";
+      bodyLines.forEach((line) => {
+        ctx.fillText(line, TEXT_LEFT, cursorY);
+        cursorY += BODY_LINE_H;
+      });
 
       if (!active) return;
-      const dataUrl = canvas.toDataURL("image/png");
-      setImageSrc(dataUrl);
-      onImageReady?.(dataUrl);
+
+      const url = canvas.toDataURL("image/png");
+      setImageSrc(url);
+      onImageReady?.(url);
     }
 
-    void renderCard();
-    return () => { active = false; };
-  }, [data]);
+    render();
+
+    return () => {
+      active = false;
+    };
+  }, [data, onImageReady]);
 
   if (!imageSrc) {
     return (
@@ -269,9 +252,16 @@ export default function FinalImageOption2({ data, onImageReady }: FinalImageOpti
   }
 
   return (
-    <div className="print-card-wrap">
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={imageSrc} alt="Final postcard option 2" className="print-card-image" />
+    <div
+      className={`print-card-wrap ${
+        isSelected ? "print-selected" : ""
+      }`}
+    >
+      <img
+        src={imageSrc}
+        alt="Postcard layout 2"
+        className="print-card-image"
+      />
     </div>
   );
 }

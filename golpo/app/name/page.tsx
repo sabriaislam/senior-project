@@ -1,8 +1,8 @@
 "use client";
 
-import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   createNewSession,
   defaultDraft,
@@ -11,14 +11,13 @@ import {
 } from "@/lib/installation-cache";
 import { updateUserDb } from "@/lib/firebase/user-db";
 
-
 export default function NamePage() {
   const router = useRouter();
   const [draft, setDraft] = useState<InstallationDraft>(defaultDraft);
   const [loaded, setLoaded] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [saved, setSaved] = useState(false);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
     try {
@@ -35,74 +34,136 @@ export default function NamePage() {
   }, []);
 
   useEffect(() => {
-    if (!loaded) {
-      return;
-    }
+    if (!loaded) return;
     window.localStorage.setItem(INSTALLATION_CACHE_KEY, JSON.stringify(draft));
   }, [draft, loaded]);
 
-  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setSaved(false);
+  // Film grain canvas
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
 
+    const GRAIN_SIZE = 1.7;
+    let animFrame: number;
+
+    function resize() {
+      canvas!.width = Math.ceil(window.innerWidth / GRAIN_SIZE);
+      canvas!.height = Math.ceil(window.innerHeight / GRAIN_SIZE);
+    }
+
+    function drawGrain() {
+      const w = canvas!.width;
+      const h = canvas!.height;
+      const imageData = ctx!.createImageData(w, h);
+      const data = imageData.data;
+      for (let i = 0; i < data.length; i += 4) {
+        const v = (Math.random() * 255) | 0;
+        data[i] = v;
+        data[i + 1] = v;
+        data[i + 2] = v;
+        data[i + 3] = 38;
+      }
+      ctx!.putImageData(imageData, 0, 0);
+      animFrame = requestAnimationFrame(drawGrain);
+    }
+
+    resize();
+    drawGrain();
+    window.addEventListener("resize", resize);
+
+    return () => {
+      cancelAnimationFrame(animFrame);
+      window.removeEventListener("resize", resize);
+    };
+  }, []);
+
+  async function handleSubmit(event: React.SyntheticEvent<HTMLFormElement>) {
+    event.preventDefault();
     if (!draft.name.trim()) {
       setError("Please enter your full name.");
       return;
     }
-
     setError(null);
     setIsSaving(true);
     createNewSession();
-
     try {
       await updateUserDb({ name: draft.name.trim() });
-      setSaved(true);
       router.push("/questions");
     } catch (err) {
       console.error("Firestore save failed:", err);
-      setError("Could not save to Firebase. Check your Firebase config and rules.");
+      setError("Could not save. Please try again.");
     } finally {
       setIsSaving(false);
     }
   }
 
   return (
-    <main className="mx-auto flex min-h-screen w-full max-w-3xl flex-col justify-center gap-8 px-6 py-12">
-      <div className="space-y-3">
-        <h1 className="font-average text-4xl leading-tight md:text-5xl">Nice to meet you, what's your name?</h1>
-      </div>
-      <form id="name-form" className="space-y-5" onSubmit={handleSubmit}>
-        <label className="block space-y-2">
-          <span className="text-sm font-semibold">Name</span>
-          <input
-            type="text"
-            value={draft.name}
-            onChange={(event) =>
-              setDraft((prev) => ({ ...prev, name: event.target.value }))
-            }
-            className="w-full rounded-xl border border-black/20 bg-white/80 px-4 py-3 text-black outline-none ring-0 transition focus:border-black/50"
-          />
-        </label>
-      </form>
+    <main className="relative w-screen h-screen overflow-hidden bg-black">
+      {/* Layer 1: Video */}
+      <video
+        src="/train.mp4"
+        autoPlay
+        loop
+        muted
+        playsInline
+        className="absolute inset-0 w-full h-full object-cover"
+      />
 
-      <div className="flex items-center gap-3 pt-2">
-        <Link
-          href="/intro"
-          className="inline-flex rounded-full border border-black/20 bg-black/5 px-5 py-2.5 text-sm font-semibold transition hover:bg-black/10"
+      {/* Layer 3: Content — horizontal position controlled by `paddingLeft`, vertical by `justifyContent` */}
+      <div
+        className="absolute inset-0 flex flex-col justify-end gap-6"
+        style={{
+          zIndex: 20,
+          paddingLeft: "8%", /* ← shift left/right */
+          paddingRight: "5%",
+          paddingBottom: "10%", /* ← shift up/down */
+        }}
+      >
+        <h1
+          className="font-vollkorn text-2xl text-left leading-tight text-white whitespace-nowrap"
+          style={{ textShadow: "0 2px 16px rgba(0,0,0,0.6)" }}
         >
-          Back
-        </Link>
-        <button
-          type="submit"
-          form="name-form"
-          disabled={isSaving}
-          className="inline-flex rounded-full border border-black/20 bg-black/10 px-5 py-2.5 text-sm font-semibold transition hover:bg-black/20 disabled:cursor-not-allowed disabled:opacity-60"
-        >
-          {isSaving ? "Saving..." : "Next"}
-        </button>
+          what name do you want to be remembered by?
+        </h1>
+
+        <form id="name-form" onSubmit={handleSubmit}>
+          <div className="flex items-center gap-3">
+            <input
+              type="text"
+              value={draft.name}
+              onChange={(e) =>
+                setDraft((prev: InstallationDraft) => ({ ...prev, name: e.target.value }))
+              }
+              className="w-xs rounded-full px-3 py-3 text-base text-black outline-none"
+              style={{
+                backgroundColor: "rgba(217, 217, 217, 0.7)",
+                boxShadow: "inset 0 2px 8px rgba(0,0,0,0.2)",
+              }}
+            />
+            <button
+              type="submit"
+              disabled={isSaving}
+              className="flex items-center justify-center w-12 h-12 rounded-full transition-all hover:scale-105 disabled:opacity-40"
+              style={{
+                background: "rgba(255,255,255,0.21)",
+                boxShadow: "0 4px 30px rgba(0,0,0,0.1)",
+                backdropFilter: "blur(4.1px)",
+                WebkitBackdropFilter: "blur(4.1px)",
+                border: "1px solid rgba(255,255,255,0.2)",
+                opacity: draft.name.trim() ? 1 : 0,
+                pointerEvents: draft.name.trim() ? "auto" : "none",
+                transition: "opacity 0.4s ease, transform 0.2s ease",
+              }}
+            >
+              <Image src="/arrow.svg" alt="Next" width={18} height={16} style={{ opacity: 0.7 }} />
+            </button>
+          </div>
+        </form>
+
+        {error ? <p className="text-sm text-red-300">{error}</p> : null}
       </div>
-      {error ? <p className="text-sm text-red-100">{error}</p> : null}
-      {saved ? <p className="text-sm text-green-100">Saved.</p> : null}
     </main>
   );
 }

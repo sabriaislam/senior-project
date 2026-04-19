@@ -1,19 +1,5 @@
 import type { Metadata } from "next";
-import { Vollkorn, Average } from "next/font/google";
 import "./globals.css";
-
-const vollkorn = Vollkorn({
-  variable: "--font-vollkorn",
-  subsets: ["latin"],
-  weight: ["400", "600", "700", "900"],
-  style: ["normal", "italic"],
-});
-
-const average = Average({
-  variable: "--font-average",
-  subsets: ["latin"],
-  weight: "400",
-});
 
 export const metadata: Metadata = {
   title: "Create Next App",
@@ -28,7 +14,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${vollkorn.variable} ${average.variable} antialiased`}
+        className="antialiased"
       >
         {children}
       </body>

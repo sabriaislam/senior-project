@@ -1,38 +1,34 @@
 @import "tailwindcss";
 
 :root {
-  --background: #945167;
+  --background: #393939;
   --foreground: #171717;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-vollkorn: var(--font-vollkorn);
-  --font-average: var(--font-average);
+  --font-sans: "Helvetica Neue", Helvetica, Arial, sans-serif;
 }
 
 .font-average {
-  font-family: var(--font-vollkorn), serif;
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
   font-weight: 700;
   letter-spacing: -0.05em;
 }
 
-.font-vollkorn {
-  font-family: var(--font-vollkorn), sans-serif;
-}
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #945167;
+    --background: #393939;
     --foreground: #ededed;
   }
 }
 
-body {
+html, body {
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-average), sans-serif;
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
 }
 
 .hide-scrollbar {

@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { getUserDb, updateUserDb } from "@/lib/firebase/user-db";
@@ -13,15 +13,16 @@ function countWords(value: string) {
 
 export default function AnswerPage() {
   const router = useRouter();
-  const [question, setQuestion] = useState("Loading question...");
+  const [category, setCategory] = useState("");
+  const [question, setQuestion] = useState("");
   const [answer, setAnswer] = useState("");
   const [isBooting, setIsBooting] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [status, setStatus] = useState<string | null>(null);
 
   const wordsUsed = useMemo(() => countWords(answer), [answer]);
   const isOverLimit = wordsUsed > MAX_WORDS;
+  const hasContent = answer.trim().length > 0;
 
   useEffect(() => {
     let mounted = true;
@@ -29,108 +30,150 @@ export default function AnswerPage() {
     async function loadAnswerContext() {
       try {
         const doc = await getUserDb();
-        if (!mounted) {
-          return;
-        }
-
-        setQuestion(doc?.chosenQuestion ?? "No question selected yet.");
+        if (!mounted) return;
+        setCategory(doc?.storyCategory ?? "");
+        setQuestion(doc?.chosenQuestion ?? "");
         setAnswer(doc?.answerText ?? "");
       } catch (err) {
         console.error("Failed to load answer context:", err);
-        if (mounted) {
-          setQuestion("No question selected yet.");
-        }
       } finally {
-        if (mounted) {
-          setIsBooting(false);
-        }
+        if (mounted) setIsBooting(false);
       }
     }
 
     void loadAnswerContext();
-
-    return () => {
-      mounted = false;
-    };
+    return () => { mounted = false; };
   }, []);
 
-  async function saveAnswer() {
+  async function handleNext() {
     if (isOverLimit) {
       setError(`Please keep your response to ${MAX_WORDS} words or fewer.`);
-      return false;
+      return;
     }
-
     setIsSaving(true);
     setError(null);
-    setStatus(null);
-
     try {
       await updateUserDb({ answerText: answer.trim() });
-      setStatus("Answer saved.");
-      return true;
+      router.push("/photobooth");
     } catch (err) {
       console.error("Failed to save answer:", err);
       setError("Could not save your answer.");
-      return false;
     } finally {
       setIsSaving(false);
     }
   }
 
-  async function handleNext() {
-    const ok = await saveAnswer();
-    if (ok) {
-      router.push("/photobooth");
-    }
-  }
-
   return (
-    <main className="mx-auto flex min-h-screen w-full max-w-3xl flex-col justify-center gap-8 px-6 py-12">
-      <div className="space-y-3">
-        <p className="text-sm uppercase tracking-[0.18em] opacity-80">Step 4</p>
-        <h1 className="font-average text-3xl leading-tight md:text-4xl">{question}</h1>
-        <p className="max-w-2xl opacity-90">Write your response in 200 words or fewer.</p>
-      </div>
+    <main className="relative w-screen h-screen overflow-hidden" style={{ backgroundColor: "#3a3a3a" }}>
+      {/* Background video */}
+      <video
+        src="/beach.mov"
+        autoPlay
+        loop
+        muted
+        playsInline
+        className="absolute inset-0 w-full h-full object-cover"
+        style={{ filter: "brightness(0.45)", zIndex: 1 }}
+      />
 
-      <section className="space-y-3">
+      {/* Content */}
+      <div
+        className="absolute inset-0 flex flex-col justify-center"
+        style={{ zIndex: 10, padding: "0 20vw" }}
+      >
+        {/* Headings */}
+        <div className="flex flex-col gap-1 mb-10">
+          {!isBooting && category ? (
+            <h1
+              className="font-average leading-tight"
+              style={{ fontSize: "clamp(1.8rem, 3.5vw, 2.8rem)", color: "#ede4e6" }}
+            >
+              {category.toLowerCase()}
+            </h1>
+          ) : null}
+          {!isBooting && question ? (
+            <h2
+              className="font-light leading-tight"
+              style={{ fontSize: "clamp(1.8rem, 3.5vw, 1.2rem)", color: "#ede4e6" }}
+            >
+              {question}
+            </h2>
+          ) : null}
+        </div>
+
+        {/* Textarea */}
         <textarea
           value={answer}
-          onChange={(event) => {
-            setAnswer(event.target.value);
-            setStatus(null);
-            if (error) {
-              setError(null);
-            }
+          onChange={(e) => {
+            setAnswer(e.target.value);
+            if (error) setError(null);
           }}
-          placeholder="Write your answer here..."
-          rows={10}
-          className="w-full border border-black/25 bg-white/85 px-4 py-3 text-black outline-none transition focus:border-black/55"
+          placeholder=""
+          className="w-full outline-none resize-none"
+          style={{
+            backgroundColor: "rgba(90,90,90,0.75)",
+            border: "1px solid rgba(255,255,255,0.25)",
+            borderRadius: "1.25rem",
+            padding: "2rem",
+            color: "#ede4e6",
+            caretColor: "#ede4e6",
+            fontSize: "1rem",
+            minHeight: "340px",
+          }}
         />
-        <p className={`text-sm ${isOverLimit ? "text-red-100" : "text-white/80"}`}>
-          {wordsUsed}/{MAX_WORDS} words
-        </p>
-      </section>
 
-      <div className="flex items-center gap-3">
-        <Link
-          href="/questions"
-          className="inline-flex rounded-full border border-black/20 bg-black/5 px-5 py-2.5 text-sm font-semibold transition hover:bg-black/10"
+        {/* Controls — fade in once user starts typing */}
+        <div
+          className="flex items-center justify-end gap-3 mt-5"
+          style={{
+            opacity: hasContent ? 1 : 0,
+            pointerEvents: hasContent ? "auto" : "none",
+            transition: "opacity 0.4s ease",
+          }}
         >
-          Back
-        </Link>
-        <button
-          type="button"
-          onClick={() => void handleNext()}
-          disabled={isSaving || isOverLimit}
-          className="inline-flex rounded-full border border-black/20 bg-black/15 px-5 py-2.5 text-sm font-semibold transition hover:bg-black/25 disabled:cursor-not-allowed disabled:opacity-60"
-        >
-          Next
-        </button>
+          <p
+            className="text-xs mr-auto"
+            style={{ color: isOverLimit ? "#ff6b6b" : "#ede4e6", opacity: isOverLimit ? 1 : 0.4 }}
+          >
+            {wordsUsed}/{MAX_WORDS}
+          </p>
+
+          {/* Back button */}
+          <button
+            type="button"
+            onClick={() => router.push("/questions")}
+            className="flex items-center justify-center w-12 h-12 rounded-full transition-all hover:scale-105"
+            style={{
+              background: "rgba(255,255,255,0.21)",
+              boxShadow: "0 4px 30px rgba(0,0,0,0.1)",
+              backdropFilter: "blur(4.1px)",
+              WebkitBackdropFilter: "blur(4.1px)",
+              border: "1px solid rgba(255,255,255,0.2)",
+            }}
+          >
+            <Image src="/arrow.svg" alt="Back" width={18} height={16} style={{ opacity: 0.7, transform: "rotate(180deg)" }} />
+          </button>
+
+          {/* Next button */}
+          <button
+            type="button"
+            onClick={() => void handleNext()}
+            disabled={isSaving || isOverLimit}
+            className="flex items-center justify-center w-12 h-12 rounded-full transition-all hover:scale-105 disabled:opacity-40"
+            style={{
+              background: "rgba(255,255,255,0.21)",
+              boxShadow: "0 4px 30px rgba(0,0,0,0.1)",
+              backdropFilter: "blur(4.1px)",
+              WebkitBackdropFilter: "blur(4.1px)",
+              border: "1px solid rgba(255,255,255,0.2)",
+            }}
+          >
+            <Image src="/arrow.svg" alt="Next" width={18} height={16} style={{ opacity: 0.7 }} />
+          </button>
+        </div>
+
+        {error ? <p className="text-sm text-red-400 mt-2">{error}</p> : null}
       </div>
-
-      {isBooting ? <p className="text-sm text-white/80">Loading answer page...</p> : null}
-      {error ? <p className="text-sm text-red-100">{error}</p> : null}
-      {status ? <p className="text-sm text-green-100">{status}</p> : null}
     </main>
   );
 }
