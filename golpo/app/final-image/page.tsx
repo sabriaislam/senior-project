@@ -1,9 +1,9 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useState } from "react";
 import FinalImageOption1, { type FinalImageData } from "@/components/final-image-option-1";
 import FinalImageOption2 from "@/components/final-image-option-2";
+import { GlassButton } from "@/components/glass-button";
 import { getUserDb } from "@/lib/firebase/user-db";
 
 const DEFAULT_DATA: FinalImageData = {
@@ -65,20 +65,6 @@ export default function FinalImagePage() {
     return () => { mounted = false; };
   }, []);
 
-  const glassBtn: React.CSSProperties = {
-    borderRadius: "9999px",
-    padding: "0.85rem 2rem",
-    background: "rgba(255,255,255,0.12)",
-    boxShadow: "0 4px 30px rgba(0,0,0,0.2)",
-    backdropFilter: "blur(8px)",
-    WebkitBackdropFilter: "blur(8px)",
-    border: "1px solid rgba(255,255,255,0.25)",
-    color: "white",
-    cursor: "pointer",
-    fontSize: "1rem",
-    display: "inline-flex",
-    alignItems: "center",
-  };
 
   const options: { id: 1 | 2 ; label: string }[] = [
     { id: 1, label: "Layout 1" },
@@ -87,15 +73,15 @@ export default function FinalImagePage() {
 
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-6xl flex-col gap-3 px-6 py-10">
-      <h1 className="text-2xl font-semibold text-white">choose your layout</h1>
+      <h1 className="text-3xl font-semibold text-white pb-5">choose your layout</h1>
 
-      <div className="grid grid-cols-2 gap-6">
+      <div className="grid grid-cols-2 gap-6 pb-4">
         {options.map(({ id, label }) => (
           <button
             key={id}
             type="button"
             onClick={() => setSelected(id)}
-            className="group relative flex flex-col items-center gap-3 rounded-2xl p-3 transition"
+            className="group relative flex flex-col items-center gap-3 rounded-2xl p-6 transition"
             style={{
               outline: selected === id ? "3px solid white" : "3px solid transparent",
               background: selected === id ? "rgba(255,255,255,0.08)" : "transparent",
@@ -111,17 +97,15 @@ export default function FinalImagePage() {
       </div>
 
       <div className="flex items-center gap-3">
-        <button
-          type="button"
+        <GlassButton
           onClick={() => { if (cardImageUrl) printImage(cardImageUrl); }}
           disabled={!cardImageUrl}
-          style={{ ...glassBtn, opacity: !cardImageUrl ? 0.4 : 1, cursor: !cardImageUrl ? "not-allowed" : "pointer" }}
         >
           Print
-        </button>
-        <Link href={`/share?layout=${selected}`} style={{ ...glassBtn, marginLeft: "auto" }}>
+        </GlassButton>
+        <GlassButton href={`/share?layout=${selected}`} style={{ marginLeft: "auto" }}>
           Next
-        </Link>
+        </GlassButton>
       </div>
 
       {isLoading ? <p className="text-sm" style={{ color: "rgba(255,255,255,0.5)" }}>Loading...</p> : null}

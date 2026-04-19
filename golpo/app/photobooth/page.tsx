@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { GlassButton } from "@/components/glass-button";
 import { updateUserDb } from "@/lib/firebase/user-db";
 
 const SHOTS_TOTAL = 4;
@@ -374,18 +375,6 @@ export default function PhotoboothPage() {
   const shotNum  = Math.min(photos.length + 1, SHOTS_TOTAL);
   const isReview = phase === "review";
 
-  const btnBase: React.CSSProperties = {
-    borderRadius: "9999px",
-    padding: "0.85rem 2rem",
-    background: "rgba(255,255,255,0.12)",
-    boxShadow: "0 4px 30px rgba(0,0,0,0.2)",
-    backdropFilter: "blur(8px)",
-    WebkitBackdropFilter: "blur(8px)",
-    border: "1px solid rgba(255,255,255,0.25)",
-    color: "white",
-    cursor: "pointer",
-    fontSize: "1rem",
-  };
 
   return (
     <div style={{ position: "fixed", inset: 0, background: "#646362", overflow: "hidden" }}>
@@ -456,44 +445,29 @@ export default function PhotoboothPage() {
         <div style={{ display: "flex", gap: "10px" }}>
           {phase === "idle" && (
             <>
-              <button
+              <GlassButton
                 onClick={() => void runInteraction(false)}
                 disabled={isCapturing || !hasCamera}
-                style={{
-                  ...btnBase,
-                  opacity: isCapturing || !hasCamera ? 0.4 : 1,
-                  cursor: isCapturing || !hasCamera ? "not-allowed" : "pointer",
-                }}
               >
                 start
-              </button>
+              </GlassButton>
             </>
           )}
 
           {phase === "review" && (
             <>
-              <button
+              <GlassButton
                 onClick={() => void runInteraction(true)}
                 disabled={hasRedo || isCapturing || isSaving}
-                style={{
-                  ...btnBase,
-                  opacity: hasRedo || isCapturing || isSaving ? 0.4 : 1,
-                  cursor: hasRedo || isCapturing || isSaving ? "not-allowed" : "pointer",
-                }}
               >
                 redo
-              </button>
-              <button
+              </GlassButton>
+              <GlassButton
                 onClick={() => router.push("/final-image")}
                 disabled={isSaving}
-                style={{
-                  ...btnBase,
-                  opacity: isSaving ? 0.4 : 1,
-                  cursor: isSaving ? "not-allowed" : "pointer",
-                }}
               >
                 next
-              </button>
+              </GlassButton>
             </>
           )}
         </div>

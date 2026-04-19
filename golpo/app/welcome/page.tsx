@@ -1,17 +1,10 @@
 "use client";
 
 import Image from "next/image";
-import Link from "next/link";
 import { useEffect, useState } from "react";
+import { GlassButton } from "@/components/glass-button";
 import { PageShell } from "@/components/page-shell";
 
-const GLASS = {
-  background: "rgba(255,255,255,0.21)",
-  boxShadow: "0 4px 30px rgba(0,0,0,0.1)",
-  backdropFilter: "blur(4.1px)",
-  WebkitBackdropFilter: "blur(4.1px)",
-  border: "1px solid rgba(255,255,255,0.2)",
-} as const;
 
 export default function WelcomePage() {
   const [showText, setShowText] = useState(false);
@@ -64,13 +57,9 @@ export default function WelcomePage() {
             pointerEvents: showNext ? "auto" : "none",
           }}
         >
-          <Link
-            href="/story"
-            className="flex items-center justify-center w-12 h-12 rounded-full transition-all hover:scale-105"
-            style={GLASS}
-          >
-            <Image src="/arrow.svg" alt="Next" width={18} height={16} style={{ opacity: 0.7 }} />
-          </Link>
+          <GlassButton href="/story" className="transition-all hover:scale-105">
+            begin
+          </GlassButton>
         </div>
       </div>
     </PageShell>

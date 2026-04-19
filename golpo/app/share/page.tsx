@@ -121,7 +121,7 @@ function SharePageInner() {
 
           <div className="flex flex-col gap-2 mt-16">
             <h1
-              className="text-7xl font-bold leading-tight text-white"
+              className="text-3xl font-bold leading-tight text-white"
               style={{ fontFamily: '"Helvetica Neue", Helvetica, Arial, sans-serif' }}
             >
               keep your story

@@ -16,7 +16,7 @@ const STORY_PROMPTS = [
     question: "tell me about a friend who makes you feel like home",
   },
   {
-    category: "THE STORY OF THINGS",
+    category: "THE STORY OF AN OBJECT",
     question: "what's an object that carries a story only you understand?",
   },
   {
@@ -62,7 +62,7 @@ export default function QuestionsPage() {
           className="text-center font-average text-3xl text-white"
           style={{ maxWidth: "520px" }}
         >
-          what story do you want to tell the most?
+          what story do you want to tell?
         </h1>
 
         <div className="flex flex-col items-center gap-4 w-full" style={{ maxWidth: "440px", padding: "0 1.5rem" }}>
@@ -72,23 +72,7 @@ export default function QuestionsPage() {
               type="button"
               disabled={saving}
               onClick={() => void handleSelect(prompt)}
-              className="w-full font-average text-2xl text-white transition-colors disabled:cursor-not-allowed disabled:opacity-50"
-              style={{
-                background: "rgba(255,255,255,0.12)",
-                boxShadow: "0 4px 30px rgba(0,0,0,0.2)",
-                backdropFilter: "blur(8px)",
-                WebkitBackdropFilter: "blur(8px)",
-                border: "1px solid rgba(255,255,255,0.25)",
-                borderRadius: "9999px",
-                padding: "0.85rem 2rem",
-                textAlign: "center",
-              }}
-              onMouseEnter={(e) => {
-                (e.currentTarget as HTMLButtonElement).style.background = "rgba(255,255,255,0.22)";
-              }}
-              onMouseLeave={(e) => {
-                (e.currentTarget as HTMLButtonElement).style.background = "rgba(255,255,255,0.12)";
-              }}
+              className="glass-btn w-full font-average text-2xl text-white disabled:cursor-not-allowed disabled:opacity-50"
             >
               {prompt.category.toLowerCase()}
             </button>

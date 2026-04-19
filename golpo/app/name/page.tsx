@@ -122,7 +122,7 @@ export default function NamePage() {
         }}
       >
         <h1
-          className="font-vollkorn text-2xl text-left leading-tight text-white whitespace-nowrap"
+          className="font-vollkorn text-3xl text-left leading-tight text-white whitespace-nowrap"
           style={{ textShadow: "0 2px 16px rgba(0,0,0,0.6)" }}
         >
           what name do you want to be remembered by?
@@ -145,13 +145,8 @@ export default function NamePage() {
             <button
               type="submit"
               disabled={isSaving}
-              className="flex items-center justify-center w-12 h-12 rounded-full transition-all hover:scale-105 disabled:opacity-40"
+              className="glass-nav flex items-center justify-center w-12 h-12 rounded-full transition-all hover:scale-105 disabled:opacity-40"
               style={{
-                background: "rgba(255,255,255,0.21)",
-                boxShadow: "0 4px 30px rgba(0,0,0,0.1)",
-                backdropFilter: "blur(4.1px)",
-                WebkitBackdropFilter: "blur(4.1px)",
-                border: "1px solid rgba(255,255,255,0.2)",
                 opacity: draft.name.trim() ? 1 : 0,
                 pointerEvents: draft.name.trim() ? "auto" : "none",
                 transition: "opacity 0.4s ease, transform 0.2s ease",

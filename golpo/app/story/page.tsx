@@ -96,14 +96,7 @@ export default function StoryPage() {
       >
         <Link
           href="/name"
-          className="flex items-center justify-center w-12 h-12 rounded-full transition-all hover:scale-105"
-          style={{
-            background: "rgba(255,255,255,0.21)",
-            boxShadow: "0 4px 30px rgba(0,0,0,0.1)",
-            backdropFilter: "blur(4.1px)",
-            WebkitBackdropFilter: "blur(4.1px)",
-            border: "1px solid rgba(255,255,255,0.2)",
-          }}
+          className="glass-nav flex items-center justify-center w-12 h-12 rounded-full transition-all hover:scale-105"
         >
           <Image src="/arrow.svg" alt="Next" width={18} height={16} style={{ opacity: 0.7 }} />
         </Link>
