@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import FinalImageOption1, { type FinalImageData } from "@/components/final-image-option-1";
 import FinalImageOption2 from "@/components/final-image-option-2";
 import { GlassButton } from "@/components/glass-button";
+import { FilmGrain } from "@/components/film-grain";
 import { getUserDb } from "@/lib/firebase/user-db";
 
 const DEFAULT_DATA: FinalImageData = {
@@ -72,43 +73,68 @@ export default function FinalImagePage() {
   ];
 
   return (
-    <main className="mx-auto flex min-h-screen w-full max-w-6xl flex-col gap-3 px-6 py-10">
-      <h1 className="text-3xl font-semibold text-white pb-5">choose your layout</h1>
+    <main className="relative min-h-screen w-full overflow-hidden" style={{ background: "black" }}>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src="/design2.png"
+        alt=""
+        style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", filter: "brightness(0.3)", zIndex: 1 }}
+      />
+      <FilmGrain />
+      <div
+        className="absolute inset-0 flex flex-col justify-center"
+        style={{ zIndex: 20, padding: "0 20vw" }}
+      >
+        {/* Headings — mirrors /answer structure */}
+        <div className="flex flex-col gap-1 mb-10">
+          <h1 className="font-average text-3xl leading-tight" style={{ color: "#ede4e6" }}>
+            choose your layout
+          </h1>
+          <p className="font-light leading-tight text-lg" style={{ color: "#ede4e6" }}>
+            pick the format for your postcard
+          </p>
+        </div>
 
-      <div className="grid grid-cols-2 gap-6 pb-4">
-        {options.map(({ id, label }) => (
-          <button
-            key={id}
-            type="button"
-            onClick={() => setSelected(id)}
-            className="group relative flex flex-col items-center gap-3 rounded-2xl p-6 transition"
-            style={{
-              outline: selected === id ? "3px solid white" : "3px solid transparent",
-              background: selected === id ? "rgba(255,255,255,0.08)" : "transparent",
-            }}
+        <div className="grid grid-cols-2 gap-4">
+          {options.map(({ id, label }) => (
+            <button
+              key={id}
+              type="button"
+              onClick={() => setSelected(id)}
+              className="group relative flex flex-col gap-2 transition overflow-hidden w-full"
+              style={{
+                backgroundColor: selected === id ? "rgba(110,105,105,0.85)" : "rgba(90,90,90,0.75)",
+                border: selected === id ? "1px solid rgba(255,255,255,0.6)" : "1px solid rgba(255,255,255,0.25)",
+                borderRadius: ".5rem",
+                padding: "0.75rem 0.75rem 0.6rem",
+              }}
+            >
+              <div className="w-full">
+                {id === 1 && <FinalImageOption1 data={data} onImageReady={(url) => setCardImageUrls((p) => ({ ...p, 1: url }))} />}
+                {id === 2 && <FinalImageOption2 data={data} onImageReady={(url) => setCardImageUrls((p) => ({ ...p, 2: url }))} />}
+              </div>
+              <span className="text-sm font-semibold text-center w-full" style={{ color: selected === id ? "#ede4e6" : "rgba(237,228,230,0.5)" }}>
+                {label}
+              </span>
+            </button>
+          ))}
+        </div>
+
+        <div className="flex items-center justify-end gap-3 mt-5">
+          <GlassButton
+            onClick={() => { if (cardImageUrl) printImage(cardImageUrl); }}
+            disabled={!cardImageUrl}
+            className="mr-auto"
           >
-            {id === 1 && <FinalImageOption1 data={data} onImageReady={(url) => setCardImageUrls((p) => ({ ...p, 1: url }))} />}
-            {id === 2 && <FinalImageOption2 data={data} onImageReady={(url) => setCardImageUrls((p) => ({ ...p, 2: url }))} />}
-            <span className="text-sm font-semibold" style={{ color: selected === id ? "white" : "rgba(255,255,255,0.45)" }}>
-              {label}
-            </span>
-          </button>
-        ))}
-      </div>
+            Print
+          </GlassButton>
+          <GlassButton href={`/share?layout=${selected}`}>
+            Next
+          </GlassButton>
+        </div>
 
-      <div className="flex items-center gap-3">
-        <GlassButton
-          onClick={() => { if (cardImageUrl) printImage(cardImageUrl); }}
-          disabled={!cardImageUrl}
-        >
-          Print
-        </GlassButton>
-        <GlassButton href={`/share?layout=${selected}`} style={{ marginLeft: "auto" }}>
-          Next
-        </GlassButton>
+        {isLoading ? <p className="text-sm mt-2" style={{ color: "rgba(255,255,255,0.5)" }}>Loading...</p> : null}
       </div>
-
-      {isLoading ? <p className="text-sm" style={{ color: "rgba(255,255,255,0.5)" }}>Loading...</p> : null}
     </main>
   );
 }

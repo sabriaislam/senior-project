@@ -44,9 +44,7 @@ export default function WelcomePage() {
             opacity: showText ? 1 : 0,
           }}
         >
-          The story of who you are and
-          <br />
-          where you came from
+          snapshots of the life you tell
         </div>
 
         <div
@@ -57,7 +55,7 @@ export default function WelcomePage() {
             pointerEvents: showNext ? "auto" : "none",
           }}
         >
-          <GlassButton href="/story" className="transition-all hover:scale-105">
+          <GlassButton href="/story" className="transition-all hover:scale-105 font-bold">
             begin
           </GlassButton>
         </div>

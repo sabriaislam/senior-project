@@ -34,13 +34,15 @@ html, body {
 /* Glass pill action button */
 .glass-btn {
   border-radius: 9999px;
-  padding: 0.85rem 2rem;
+  padding: 0.6rem 1.75rem;
   background: rgba(255, 255, 255, 0.12);
   box-shadow: 0 4px 30px rgba(0, 0, 0, 0.2);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   border: 1px solid rgba(255, 255, 255, 0.25);
   color: white;
+  font-weight: 600;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
   cursor: pointer;
   display: inline-flex;
   align-items: center;

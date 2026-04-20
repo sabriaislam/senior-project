@@ -1,11 +1,12 @@
 "use client";
 
 import { useEffect, useState, Suspense } from "react";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import FinalImageOption1, { type FinalImageData } from "@/components/final-image-option-1";
 import FinalImageOption2 from "@/components/final-image-option-2";
 import { getUserDb } from "@/lib/firebase/user-db";
+import { FilmGrain } from "@/components/film-grain";
 
 const DEFAULT_DATA: FinalImageData = {
   storyCategory: "",
@@ -16,6 +17,7 @@ const DEFAULT_DATA: FinalImageData = {
 };
 
 function SharePageInner() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const layout = searchParams.get("layout") === "2" ? 2 : 1;
 
@@ -25,7 +27,6 @@ function SharePageInner() {
   const [email, setEmail] = useState("");
   const [isSending, setIsSending] = useState(false);
   const [sendError, setSendError] = useState<string | null>(null);
-  const [sendSuccess, setSendSuccess] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -51,7 +52,6 @@ function SharePageInner() {
   async function handleSendEmail(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setSendError(null);
-    setSendSuccess(false);
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email.trim())) {
@@ -82,8 +82,7 @@ function SharePageInner() {
         return;
       }
 
-      setSendSuccess(true);
-      setEmail("");
+      router.push("/thank-you");
     } catch (err) {
       console.error("Send email failed:", err);
       setSendError("Something went wrong. Please try again.");
@@ -93,12 +92,16 @@ function SharePageInner() {
   }
 
   return (
-    <main
-      className="grid min-h-screen w-full grid-cols-2"
-      style={{ backgroundColor: "#494949" }}
-    >
+    <main className="relative grid min-h-screen w-full grid-cols-2 overflow-hidden" style={{ background: "black" }}>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src="/design3.png"
+        alt=""
+        style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", filter: "brightness(0.3)", zIndex: 1 }}
+      />
+      <FilmGrain />
       {/* Left — postcard preview */}
-      <div className="flex items-center justify-center p-10 border-r border-white/10">
+      <div className="relative flex items-center justify-center p-10 border-r border-white/10" style={{ zIndex: 20 }}>
         <div className="w-full max-w-lg">
           {layout === 1 ? (
             <FinalImageOption1 data={data} onImageReady={setCardImageUrl} />
@@ -109,36 +112,36 @@ function SharePageInner() {
       </div>
 
       {/* Right — actions */}
-      <div className="flex flex-col justify-between p-12 lg:p-24">
+      <div className="relative flex items-center justify-center p-10" style={{ zIndex: 20 }}>
         {/* Top: heading + email form */}
-        <div className="flex flex-col gap-8">
+        <div className="w-full max-w-lg flex flex-col justify-start gap-4">
           <Link
             href={`/final-image`}
-            className="text-sm font-semibold text-white/50 transition hover:text-white/80"
+            className="text-sm font-semibold text-white/80 transition hover:text-white"
           >
             ← Back
           </Link>
 
-          <div className="flex flex-col gap-2 mt-16">
+          <div className="flex flex-col gap-1">
             <h1
-              className="text-3xl font-bold leading-tight text-white"
-              style={{ fontFamily: '"Helvetica Neue", Helvetica, Arial, sans-serif' }}
+              className="font-average text-3xl leading-tight"
+              style={{ color: "#ede4e6" }}
             >
               keep your story
             </h1>
+            <p className="font-light leading-tight" style={{ fontSize: "clamp(1rem, 2vw, 1.2rem)", color: "#ede4e6" }}>
+              email your postcard
+            </p>
           </div>
 
           <div className="flex flex-col gap-3">
-            <p className="text-sm font-semibold text-white/60">
-              email your postcard
-            </p>
             <form onSubmit={(e) => void handleSendEmail(e)} className="flex items-center gap-2">
               <input
                 type="email"
                 value={email}
-                onChange={(e) => { setEmail(e.target.value); setSendError(null); setSendSuccess(false); }}
+                onChange={(e) => { setEmail(e.target.value); setSendError(null); }}
                 placeholder="youremail@example.com"
-                className="flex-1 rounded-full border border-white/20 bg-white/10 px-5 py-3 text-sm text-white placeholder-white/40 outline-none transition focus:border-white/60 focus:bg-white/15"
+                className="flex-1 rounded-full border border-white/20 bg-white/20 px-5 py-3 text-sm text-white placeholder-white/50 outline-none transition focus:border-white/80 focus:bg-white/15"
               />
               <button
                 type="submit"
@@ -156,15 +159,15 @@ function SharePageInner() {
               </button>
             </form>
             {sendError ? <p className="text-xs text-red-300">{sendError}</p> : null}
-            {sendSuccess ? <p className="text-xs text-green-300">Postcard sent! Check your inbox.</p> : null}
+            <button
+              type="button"
+              onClick={() => router.push("/thank-you")}
+              className="text-sm font-medium text-white/70 hover:text-white transition self-start"
+            >
+              no thank you
+            </button>
           </div>
         </div>
-
-        {/* Bottom: golpo link */}
-        <p className="text-sm text-white/50">
-          to read everyone else&apos;s story go to{" "}
-          <span className="font-bold text-white">golpo.com</span>
-        </p>
       </div>
     </main>
   );

@@ -8,39 +8,24 @@ import { PageShell } from "@/components/page-shell";
 
 export default function StoryPage() {
   const [entry, setEntry] = useState<ResponseEntry | null>(null);
-  const [loaded, setLoaded] = useState(false);
+  const [showNav, setShowNav] = useState(false);
 
   useEffect(() => {
     let mounted = true;
     void getLastEntry().then((e) => {
-      if (mounted) {
-        setEntry(e);
-        setLoaded(true);
-      }
+      if (!mounted) return;
+      setEntry(e);
+      setTimeout(() => { if (mounted) setShowNav(true); }, 1000);
     });
     return () => { mounted = false; };
   }, []);
-
-  if (!loaded) {
-    return <main className="relative w-screen h-screen overflow-hidden bg-black" />;
-  }
-
-  if (!entry) {
-    return (
-      <main className="relative w-screen h-screen overflow-hidden bg-black flex items-center justify-center">
-        <Link href="/name" className="text-white text-lg opacity-60 hover:opacity-100 transition-opacity">
-          Begin →
-        </Link>
-      </main>
-    );
-  }
 
   return (
     <PageShell videoSrc="/cat.MOV" brightness={0.35}>
       {/* Content */}
       <div
         className="absolute inset-0 flex items-center"
-        style={{ zIndex: 20, padding: "0 6vw" }}
+        style={{ zIndex: 20, padding: "0 6vw", opacity: entry ? 1 : 0, transition: "opacity 0.4s ease" }}
       >
         {/* Left — label */}
         <div className="flex-1 pr-12">
@@ -49,7 +34,7 @@ export default function StoryPage() {
             style={{ fontSize: "clamp(1.6rem, 3vw, 2.4rem)" }}
           >
             this is{" "}
-            <strong style={{ fontWeight: 700 }}>{entry.name}&apos;s</strong>{" "}
+            <strong style={{ fontWeight: 700 }}>{entry?.name}&apos;s</strong>{" "}
             story
           </p>
         </div>
@@ -58,41 +43,42 @@ export default function StoryPage() {
         <div
           className="flex-1"
           style={{
-            background: "rgba(50,50,50,0.85)",
-            borderRadius: "1.5rem",
-            padding: "2.5rem",
+            backgroundColor: "rgba(90,90,90,0.75)",
+            border: "1px solid rgba(255,255,255,0.25)",
+            borderRadius: "1.25rem",
+            padding: "2rem",
             display: "flex",
             flexDirection: "column",
             gap: "1.25rem",
           }}
         >
-          {entry.storyCategory ? (
+          {entry?.storyCategory ? (
             <p
-              className="text-white/40 text-xs uppercase tracking-widest"
-              style={{ letterSpacing: "0.18em" }}
+              className="font-average text-3xl leading-tight"
+              style={{ color: "#ede4e6" }}
             >
-              {entry.storyCategory}
+              {entry.storyCategory.toLowerCase()}
             </p>
           ) : null}
           <p
-            className="text-white/60 text-sm"
-            style={{ fontStyle: "italic" }}
+            className="font-light leading-tight"
+            style={{ fontSize: "clamp(1rem, 2vw, 1.2rem)", color: "#ede4e6" }}
           >
-            {entry.chosenQuestion}
+            {entry?.chosenQuestion}
           </p>
           <p
-            className="text-white leading-relaxed"
-            style={{ fontSize: "1.1rem" }}
+            className="leading-relaxed"
+            style={{ fontSize: "1rem", color: "#ede4e6" }}
           >
-            {entry.answerText}
+            {entry?.answerText}
           </p>
         </div>
       </div>
 
       {/* Next arrow */}
       <div
-        className="absolute"
-        style={{ bottom: "2.5rem", right: "3rem", zIndex: 30 }}
+        className="absolute transition-opacity duration-1000"
+        style={{ bottom: "2.5rem", right: "6vw", zIndex: 30, opacity: showNav ? 1 : 0, pointerEvents: showNav ? "auto" : "none" }}
       >
         <Link
           href="/name"

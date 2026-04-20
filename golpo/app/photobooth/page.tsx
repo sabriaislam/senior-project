@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { GlassButton } from "@/components/glass-button";
+import { FilmGrain } from "@/components/film-grain";
 import { updateUserDb } from "@/lib/firebase/user-db";
 
 const SHOTS_TOTAL = 4;
@@ -377,22 +378,37 @@ export default function PhotoboothPage() {
 
 
   return (
-    <div style={{ position: "fixed", inset: 0, background: "#646362", overflow: "hidden" }}>
+    <div style={{ position: "fixed", inset: 0, overflow: "hidden", background: "black" }}>
+      {/* design1 background */}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src="/design1.png"
+        alt=""
+        style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", filter: "brightness(0.3)", zIndex: 1 }}
+      />
+
+      {/* Film grain overlay */}
+      
+      <FilmGrain />
+
       {/* Hidden camera video */}
       <video ref={videoRef} style={{ display: "none" }} autoPlay playsInline muted />
 
-      {/* Full-page tiled camera preview — hidden, plain gray background */}
-      <canvas
-        ref={bgRef}
-        style={{ display: "none" }}
-      />
+      {/* Unused bg canvas kept to avoid breaking the render loop ref */}
+      <canvas ref={bgRef} style={{ display: "none" }} />
       {/* Centre content */}
       <div style={{
-        position: "absolute", inset: 0,
+        position: "absolute", inset: 0, zIndex: 20,
         display: "flex", flexDirection: "column",
         alignItems: "center", justifyContent: "center",
         gap: "20px",
       }}>
+        <h1
+          className="text-center font-average text-3xl text-white"
+          style={{ maxWidth: "520px" }}
+        >
+          the face of the storyteller
+        </h1>
         {/* Camera view or review grid */}
         <div style={{ position: "relative", width: "min(64vh, 60vw)", height: "min(64vh, 60vw)" }}>
           {/* CRT canvas — always mounted to preserve the WebGL context across redo */}

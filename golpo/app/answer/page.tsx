@@ -94,7 +94,7 @@ export default function AnswerPage() {
           {!isBooting && question ? (
             <h2
               className="font-light leading-tight"
-              style={{ fontSize: "clamp(1.8rem, 3.5vw, 1.2rem)", color: "#ede4e6" }}
+              style={{ fontSize: "clamp(1.2rem, 3.5vw, 1.2rem)", color: "#ede4e6" }}
             >
               {question}
             </h2>
@@ -133,7 +133,7 @@ export default function AnswerPage() {
         >
           <p
             className="text-xs mr-auto"
-            style={{ color: isOverLimit ? "#ff6b6b" : "#ede4e6", opacity: isOverLimit ? 1 : 0.4 }}
+            style={{ color: isOverLimit ? "#ff6b6b" : "#ede4e6", opacity: isOverLimit ? 1 : 0.65 }}
           >
             {wordsUsed}/{MAX_WORDS}
           </p>
