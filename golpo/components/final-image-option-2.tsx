@@ -118,22 +118,34 @@ export default function FinalImageOption2({
 
       ctx.setTransform(RENDER_SCALE, 0, 0, RENDER_SCALE, 0, 0);
 
-      if (document.fonts) {
+      // Register fonts by name so canvas can resolve them
+      const fontSpecs: [string, string, FontFaceDescriptors][] = [
+        ["Pixelscript", 'url(/fonts/PFPixelscriptPro.ttf) format("truetype")', {}],
+        ["Gayatri", "url(/fonts/gayatrial-italic.otf)", { style: "italic" }],
+        ["Karla", "url(/fonts/Karla-Regular-S52ZIU5L.3ac28a6ac03a9f7f3d82.woff)", {}],
+      ];
+      await Promise.all(fontSpecs.map(async ([family, src, descriptors]) => {
+        const already = [...document.fonts].find(
+          (f) => f.family.replace(/['"]/g, "") === family && f.status === "loaded"
+        );
+        if (already) return;
         try {
-          await document.fonts.ready;
-        } catch {}
-      }
+          const face = new FontFace(family, src, descriptors);
+          await face.load();
+          document.fonts.add(face);
+        } catch { /* non-blocking */ }
+      }));
 
       // Background
       ctx.fillStyle = BG;
       ctx.fillRect(0, 0, CARD_W, CARD_H);
 
       // Panel
-      ctx.fillStyle = "#000";
+      ctx.fillStyle = "#69B568";
       ctx.fillRect(PANEL_X, PANEL_Y, PANEL_W, PANEL_H);
 
       ctx.lineWidth = 20;
-      ctx.strokeStyle = "#000";
+      ctx.strokeStyle = "#69B568";
       ctx.strokeRect(PANEL_X, PANEL_Y, PANEL_W, PANEL_H);
 
       // Load images
@@ -190,26 +202,41 @@ export default function FinalImageOption2({
       let cursorY = PANEL_Y; // Should be 100
 
       ctx.textBaseline = "top";
-      ctx.font = `800 ${TITLE_SIZE}px Helvetica, Arial, sans-serif`;
+      ctx.fillStyle = "#6298DB";
 
-      const titleLines = wrapText(ctx, data.storyCategory.toLowerCase(), TEXT_WIDTH, TITLE_SIZE, 3);
-      titleLines.forEach((line) => {
-        ctx.fillText(line, TEXT_LEFT, cursorY);
-        cursorY += TITLE_SIZE + 4; 
+      const titleText = data.storyCategory.toLowerCase();
+      ctx.font = `italic ${TITLE_SIZE}px Gayatri, Helvetica, Arial, sans-serif`;
+      const titleLines = wrapText(ctx, titleText, TEXT_WIDTH, TITLE_SIZE, 3);
+
+      titleLines.forEach((line, lineIndex) => {
+        if (lineIndex === 0 && line.length > 0) {
+          // First character in Pixelscript
+          const firstChar = line[0].toUpperCase();
+          const rest = line.slice(1);
+          ctx.font = `${TITLE_SIZE}px Pixelscript, Helvetica, Arial, sans-serif`;
+          ctx.fillText(firstChar, TEXT_LEFT, cursorY);
+          const firstCharW = ctx.measureText(firstChar).width;
+          ctx.font = `italic ${TITLE_SIZE}px Gayatri, Helvetica, Arial, sans-serif`;
+          ctx.fillText(rest, TEXT_LEFT + firstCharW, cursorY);
+        } else {
+          ctx.font = `italic ${TITLE_SIZE}px Gayatri, Helvetica, Arial, sans-serif`;
+          ctx.fillText(line, TEXT_LEFT, cursorY);
+        }
+        cursorY += TITLE_SIZE + 4;
       });
 
       // Title to Name Gap
-      cursorY += 10; 
+      cursorY += 10;
 
       // Byline
-      ctx.font = `${BYLINE_SIZE}px Helvetica, Arial, sans-serif`;
-      ctx.fillStyle = "#555";
+      ctx.font = `bold ${BYLINE_SIZE}px Karla, Helvetica, Arial, sans-serif`;
+      ctx.fillStyle = "#565656";
       ctx.fillText(`by ${data.name || "Anonymous"}`, TEXT_LEFT, cursorY);
 
       // Name to Body Gap
       cursorY += BYLINE_SIZE + 24;
       // Body
-      ctx.font = `${BODY_SIZE}px Helvetica, Arial, sans-serif`;
+      ctx.font = `${BODY_SIZE}px Karla, Helvetica, Arial, sans-serif`;
       ctx.fillStyle = "#333";
 
       // Recalculate max lines based on remaining space

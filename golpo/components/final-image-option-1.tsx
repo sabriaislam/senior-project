@@ -19,7 +19,7 @@ const CARD_W = 916;
 const CARD_H = 600;
 const RENDER_SCALE = 2;
 const BG = "#F0F0F0";
-const TEXT_COLOR = "#1a1a1a";
+const TEXT_COLOR = "#6298DB";
 const SUBTEXT_COLOR = "#5B5B5B";
 
 // Top strip dimensions (matches SVG)
@@ -125,20 +125,31 @@ export default function FinalImageOption1({ data, onImageReady }: Props) {
       ctx.setTransform(RENDER_SCALE, 0, 0, RENDER_SCALE, 0, 0);
       ctx.imageSmoothingEnabled = true;
       ctx.imageSmoothingQuality = "high";
-      if (document.fonts) {
+
+      // Register fonts by name so canvas can resolve them
+      const fontSpecs: [string, string, FontFaceDescriptors][] = [
+        ["Pixelscript", 'url(/fonts/PFPixelscriptPro.ttf) format("truetype")', {}],
+        ["Gayatri", "url(/fonts/gayatrial-italic.otf)", { style: "italic" }],
+        ["Karla", "url(/fonts/Karla-Regular-S52ZIU5L.3ac28a6ac03a9f7f3d82.woff)", {}],
+      ];
+      await Promise.all(fontSpecs.map(async ([family, src, descriptors]) => {
+        const already = [...document.fonts].find(
+          (f) => f.family.replace(/['"]/g, "") === family && f.status === "loaded"
+        );
+        if (already) return;
         try {
-          await document.fonts.ready;
-        } catch {
-          /* non-blocking */
-        }
-      }
+          const face = new FontFace(family, src, descriptors);
+          await face.load();
+          document.fonts.add(face);
+        } catch { /* non-blocking */ }
+      }));
 
       // ── Background ──────────────────────────────────────────────
       ctx.fillStyle = BG;
       ctx.fillRect(0, 0, CARD_W, CARD_H);
 
       // ── Top black strip ─────────────────────────────────────────
-      ctx.fillStyle = "#111";
+      ctx.fillStyle = "#69B568";
       ctx.fillRect(STRIP_X, STRIP_Y, STRIP_W, STRIP_H);
 
       // ── Load images ─────────────────────────────────────────────
@@ -185,25 +196,36 @@ export default function FinalImageOption1({ data, onImageReady }: Props) {
   ctx.textBaseline = "top"; // Change from "alphabetic" to match Option 02
   ctx.textAlign = "left";
 
-  // 1. Heading (Title)
+  // 1. Heading (Title) — first char Pixelscript uppercase, rest Gayatri italic
   ctx.fillStyle = TEXT_COLOR;
-  ctx.font = `700 ${HEADING_SIZE}px Helvetica, Arial, sans-serif`;
-
-  const headingLines = wrapText(ctx, (data.storyCategory || "").toLowerCase(), CONTENT_W * 0.6, 2);
-  headingLines.forEach((line) => {
-    ctx.fillText(line, CONTENT_X, cursorY);
-    cursorY += HEADING_SIZE + 4; // Title line height + small gap
+  const titleText = (data.storyCategory || "").toLowerCase();
+  ctx.font = `italic ${HEADING_SIZE}px Gayatri, Helvetica, Arial, sans-serif`;
+  const headingLines = wrapText(ctx, titleText, CONTENT_W * 0.6, 2);
+  headingLines.forEach((line, lineIndex) => {
+    if (lineIndex === 0 && line.length > 0) {
+      const firstChar = line[0].toUpperCase();
+      const rest = line.slice(1);
+      ctx.font = `${HEADING_SIZE}px Pixelscript, Helvetica, Arial, sans-serif`;
+      ctx.fillText(firstChar, CONTENT_X, cursorY);
+      const firstCharW = ctx.measureText(firstChar).width;
+      ctx.font = `italic ${HEADING_SIZE}px Gayatri, Helvetica, Arial, sans-serif`;
+      ctx.fillText(rest, CONTENT_X + firstCharW, cursorY);
+    } else {
+      ctx.font = `italic ${HEADING_SIZE}px Gayatri, Helvetica, Arial, sans-serif`;
+      ctx.fillText(line, CONTENT_X, cursorY);
+    }
+    cursorY += HEADING_SIZE + 4;
   });
 
   // 2. "by name" (Standardize gap: 10px)
   cursorY += 10; 
-  ctx.font = `${SUBHEADING_SIZE}px Helvetica, Arial, sans-serif`;
-  ctx.fillStyle = "#888";
+  ctx.font = `bold ${SUBHEADING_SIZE}px Karla, Helvetica, Arial, sans-serif`;
+  ctx.fillStyle = "#565656";
   ctx.fillText(`by ${data.name || "Anonymous"}`, CONTENT_X, cursorY);
 
   // 3. Body text (Standardize gap: 24px)
   cursorY += SUBHEADING_SIZE + 24; 
-  ctx.font = `${BODY_SIZE}px Helvetica, Arial, sans-serif`;
+  ctx.font = `${BODY_SIZE}px Karla, Helvetica, Arial, sans-serif`;
   ctx.fillStyle = SUBTEXT_COLOR;
 
   const remainingH = CARD_H - 40 - cursorY;

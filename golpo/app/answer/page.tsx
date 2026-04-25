@@ -5,10 +5,15 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { getUserDb, updateUserDb } from "@/lib/firebase/user-db";
 
-const MAX_WORDS = 100;
+const MAX_WORDS = 150;
 
 function countWords(value: string) {
   return value.trim().split(/\s+/).filter(Boolean).length;
+}
+
+function extractSubject(category: string) {
+  const match = category.match(/the story of (.+)/i);
+  return match ? match[1].toLowerCase() : category.toLowerCase();
 }
 
 export default function AnswerPage() {
@@ -22,7 +27,6 @@ export default function AnswerPage() {
 
   const wordsUsed = useMemo(() => countWords(answer), [answer]);
   const isOverLimit = wordsUsed > MAX_WORDS;
-  const hasContent = answer.trim().length > 0;
 
   useEffect(() => {
     let mounted = true;
@@ -42,7 +46,9 @@ export default function AnswerPage() {
     }
 
     void loadAnswerContext();
-    return () => { mounted = false; };
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   async function handleNext() {
@@ -63,102 +69,157 @@ export default function AnswerPage() {
     }
   }
 
+  const subject = extractSubject(category);
+
   return (
-    <main className="relative w-screen h-screen overflow-hidden" style={{ backgroundColor: "#3a3a3a" }}>
-      {/* Background video */}
-      <video
-        src="/beach.mov"
-        autoPlay
-        loop
-        muted
-        playsInline
-        className="absolute inset-0 w-full h-full object-cover"
-        style={{ filter: "brightness(0.45)", zIndex: 1 }}
-      />
-
-      {/* Content */}
+    <main
+      className="w-screen h-screen overflow-hidden flex items-center justify-center"
+      style={{ backgroundColor: "#636363" }}
+    >
+      {/* Pink card */}
       <div
-        className="absolute inset-0 flex flex-col justify-center"
-        style={{ zIndex: 10, padding: "0 20vw" }}
+        className="relative overflow-hidden"
+        style={{
+          width: "61vw",
+          height: "60vh",
+          backgroundColor: "#DB62A0",
+        }}
       >
-        {/* Headings */}
-        <div className="flex flex-col gap-1 mb-10">
-          {!isBooting && category ? (
-            <h1
-              className="font-average text-3xl leading-tight"
-              style={{ color: "#ede4e6" }}
-            >
-              {category.toLowerCase()}
-            </h1>
-          ) : null}
-          {!isBooting && question ? (
-            <h2
-              className="font-light leading-tight"
-              style={{ fontSize: "clamp(1.2rem, 3.5vw, 1.2rem)", color: "#ede4e6" }}
-            >
-              {question}
-            </h2>
-          ) : null}
-        </div>
-
-        {/* Textarea */}
-        <textarea
-          value={answer}
-          onChange={(e) => {
-            setAnswer(e.target.value);
-            if (error) setError(null);
-          }}
-          placeholder=""
-          className="w-full outline-none resize-none"
+        {/* Grain overlay */}
+        <div
+          aria-hidden
           style={{
-            backgroundColor: "rgba(90,90,90,0.75)",
-            border: "1px solid rgba(255,255,255,0.25)",
-            borderRadius: "1.25rem",
-            padding: "2rem",
-            color: "#ede4e6",
-            caretColor: "#ede4e6",
-            fontSize: "1rem",
-            minHeight: "340px",
+            position: "absolute",
+            inset: 0,
+            backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.25 1.25' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='luminanceToAlpha'/%3E%3CfeComponentTransfer%3E%3CfeFuncA type='discrete' tableValues='1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0'/%3E%3C/feComponentTransfer%3E%3Crect width='300' height='300' filter='url(%23n)'/%3E%3C/svg%3E")`,
+            opacity: 0.18,
+            pointerEvents: "none",
+            zIndex: 0,
           }}
         />
 
-        {/* Controls — fade in once user starts typing */}
+        {/* Inner content */}
         <div
-          className="flex items-center justify-end gap-3 mt-5"
           style={{
-            opacity: hasContent ? 1 : 0,
-            pointerEvents: hasContent ? "auto" : "none",
-            transition: "opacity 0.4s ease",
+            position: "absolute",
+            inset: "7.7%",
+            zIndex: 1,
+            display: "flex",
+            flexDirection: "column",
           }}
         >
-          <p
-            className="text-xs mr-auto"
-            style={{ color: isOverLimit ? "#ff6b6b" : "#ede4e6", opacity: isOverLimit ? 1 : 0.65 }}
-          >
-            {wordsUsed}/{MAX_WORDS}
-          </p>
+          {/* Heading: "The story of [subject]" */}
+          {!isBooting && (
+            <h1
+              style={{
+                color: "white",
+                fontSize: "clamp(1.4rem, 2.6vw, 2.2rem)",
+                lineHeight: 1.15,
+                marginBottom: "0.6rem",
+              }}
+            >
+              <span className="font-pixel">T</span>
+              <span
+                className="font-gayatri"
+                style={{ fontStyle: "italic" }}
+              >
+                he story of {subject}
+              </span>
+            </h1>
+          )}
 
-          {/* Back button */}
-          <button
-            type="button"
-            onClick={() => router.push("/questions")}
-            className="glass-nav flex items-center justify-center w-12 h-12 rounded-full transition-all hover:scale-105"
-          >
-            <Image src="/arrow.svg" alt="Back" width={18} height={16} style={{ opacity: 0.7, transform: "rotate(180deg)" }} />
-          </button>
+          {/* Supporting question */}
+          {!isBooting && question && (
+            <p
+              style={{
+                color: "white",
+                fontFamily: "'Roboto Mono', monospace",
+                fontSize: "clamp(0.7rem, 1.1vw, 0.9rem)",
+                fontWeight: 700,
+                marginBottom: "1.25rem",
+                lineHeight: 1.4,
+              }}
+            >
+              {question}
+            </p>
+          )}
 
-          {/* Next button */}
-          <button
-            type="button"
-            onClick={() => void handleNext()}
-            disabled={isSaving || isOverLimit}
-            className="glass-nav flex items-center justify-center w-12 h-12 rounded-full transition-all hover:scale-105 disabled:opacity-40"
+          {/* Textarea */}
+          <textarea
+            value={answer}
+            onChange={(e) => {
+              setAnswer(e.target.value);
+              if (error) setError(null);
+            }}
+            className="font-roboto-mono outline-none resize-none"
+            style={{
+              height: "65%",
+              backgroundColor: "rgba(214, 214, 214, 0.6)",
+              border: "none",
+              padding: "1.5rem",
+              fontSize: "clamp(0.8rem, 1vw, 1rem)",
+              color: "#1a1a1a",
+              caretColor: "#1a1a1a",
+            }}
+          />
+
+          {/* Bottom row: word count / error + next button */}
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              marginTop: "1rem",
+              paddingBottom: "0.5rem",
+            }}
           >
-            <Image src="/arrow.svg" alt="Next" width={18} height={16} style={{ opacity: 0.7 }} />
-          </button>
+            <div>
+              {answer.trim() ? (
+                <p
+                  className="text-xs"
+                  style={{
+                    color: isOverLimit ? "#ff4444" : "rgba(255,255,255,0.65)",
+                  }}
+                >
+                  {wordsUsed}/{MAX_WORDS}
+                </p>
+              ) : null}
+              {error ? (
+                <p className="text-sm mt-1" style={{ color: "#ff4444" }}>
+                  {error}
+                </p>
+              ) : null}
+            </div>
+
+            <button
+              type="button"
+              onClick={() => void handleNext()}
+              disabled={isSaving || isOverLimit}
+              style={{
+                background: "none",
+                border: "none",
+                padding: 0,
+                cursor: isSaving || isOverLimit ? "not-allowed" : "pointer",
+                opacity: isSaving || isOverLimit ? 0.4 : 1,
+                transition: "opacity 0.2s ease, transform 0.15s ease",
+              }}
+              onMouseEnter={(e) => {
+                if (!isSaving && !isOverLimit)
+                  (e.currentTarget as HTMLButtonElement).style.transform = "scale(1.05)";
+              }}
+              onMouseLeave={(e) => {
+                (e.currentTarget as HTMLButtonElement).style.transform = "scale(1)";
+              }}
+            >
+              <Image
+                src="/buttons/next-button.svg"
+                alt="Next"
+                width={40}
+                height={50}
+              />
+            </button>
+          </div>
         </div>
-
-        {error ? <p className="text-sm text-red-400 mt-2">{error}</p> : null}
       </div>
     </main>
   );

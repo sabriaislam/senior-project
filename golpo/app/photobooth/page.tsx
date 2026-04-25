@@ -1,9 +1,8 @@
 "use client";
 
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { GlassButton } from "@/components/glass-button";
-import { FilmGrain } from "@/components/film-grain";
 import { updateUserDb } from "@/lib/firebase/user-db";
 
 const SHOTS_TOTAL = 4;
@@ -120,7 +119,6 @@ void main(){
   gl_FragColor = vec4(clamp(col, 0.0, 1.0), 1.0);
 }`;
 
-// BROADCAST preset (default — no user controls needed)
 const PRESET = {
   curvature: 0.9, scanlines: 498, scanIntensity: 0.23, phosphor: 0.24,
   brightness: 1.05, chroma: 0.0059, rgbShift: 0.002, noise: 0.13,
@@ -138,7 +136,6 @@ export default function PhotoboothPage() {
   const router = useRouter();
   const videoRef   = useRef<HTMLVideoElement | null>(null);
   const crtRef     = useRef<HTMLCanvasElement | null>(null);
-  const bgRef      = useRef<HTMLCanvasElement | null>(null);
   const captureRef = useRef<HTMLCanvasElement | null>(null);
   const streamRef  = useRef<MediaStream | null>(null);
   const glRef      = useRef<GlState | null>(null);
@@ -205,7 +202,12 @@ export default function PhotoboothPage() {
   }, []);
 
   const startCamera = useCallback(async () => {
-    if (streamRef.current) { setHasCamera(true); return; }
+    if (streamRef.current?.active) { setHasCamera(true); return; }
+
+    streamRef.current?.getTracks().forEach((t) => t.stop());
+    streamRef.current = null;
+    setError(null);
+
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: "user", width: { ideal: 1280 }, height: { ideal: 720 } },
@@ -221,25 +223,31 @@ export default function PhotoboothPage() {
       }
       setHasCamera(true);
     } catch (e) {
-      console.error(e);
-      setError("Camera access failed. Allow webcam permission and try again.");
+      const err = e as DOMException;
+      streamRef.current = null;
+      console.error(err);
+      if (err.name === "NotAllowedError" || err.name === "PermissionDeniedError") {
+        setError("Camera permission denied — allow webcam access in your browser settings and refresh.");
+      } else if (err.name === "NotFoundError" || err.name === "DevicesNotFoundError") {
+        setError("No camera found — connect a camera and try again.");
+      } else if (err.name === "NotReadableError" || err.name === "TrackStartError") {
+        setError("Camera is in use by another app — close it and try again.");
+      } else {
+        setError("Camera access failed — allow webcam permission and try again.");
+      }
     }
   }, []);
 
-  // Mount: size canvases, start camera, init GL
   useEffect(() => {
-    const bg = bgRef.current;
-    if (bg) { bg.width = window.innerWidth; bg.height = window.innerHeight; }
-
     void startCamera().then(() => initGL());
 
     return () => {
       cancelAnimationFrame(animRef.current);
       streamRef.current?.getTracks().forEach((t) => t.stop());
+      streamRef.current = null;
     };
   }, [startCamera, initGL]);
 
-  // Render loop
   useEffect(() => {
     let running = true;
     function loop() {
@@ -248,7 +256,6 @@ export default function PhotoboothPage() {
       const video = videoRef.current;
       if (!video || video.readyState < 2) return;
 
-      // CRT WebGL render
       const gx = glRef.current;
       const crtCanvas = crtRef.current;
       if (gx && crtCanvas) {
@@ -277,53 +284,12 @@ export default function PhotoboothPage() {
         gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
         gx.t += 0.016;
       }
-
-      // Background canvas: tiled camera preview
-      const bg = bgRef.current;
-      if (bg) {
-        const ctx = bg.getContext("2d");
-        if (ctx) {
-          const TILE = 116;
-          const GAP  = 3;
-          const STEP = TILE + GAP;
-
-          // Source: crop video to square from center
-          const vw = video.videoWidth  || 640;
-          const vh = video.videoHeight || 480;
-          let srcX = 0, srcY = 0, srcW = vw, srcH = vh;
-          if (vw / vh > 1) { srcW = vh; srcX = (vw - srcW) / 2; }
-          else              { srcH = vw; srcY = (vh - srcH) / 2; }
-
-          ctx.fillStyle = "#646362";
-          ctx.fillRect(0, 0, bg.width, bg.height);
-
-          const cols = Math.ceil(bg.width  / STEP) + 1;
-          const rows = Math.ceil(bg.height / STEP) + 1;
-
-          for (let row = 0; row < rows; row++) {
-            for (let col = 0; col < cols; col++) {
-              const x = col * STEP;
-              const y = row * STEP;
-              ctx.save();
-              ctx.beginPath();
-              ctx.rect(x, y, TILE, TILE);
-              ctx.clip();
-              // mirror horizontally inside tile
-              ctx.translate(x + TILE, y);
-              ctx.scale(-1, 1);
-              ctx.drawImage(video, srcX, srcY, srcW, srcH, 0, 0, TILE, TILE);
-              ctx.restore();
-            }
-          }
-        }
-      }
     }
     loop();
     return () => { running = false; };
   }, []);
 
   function captureFrame() {
-    // Capture directly from the CRT WebGL canvas (preserveDrawingBuffer: true)
     const crtCanvas = crtRef.current;
     if (!crtCanvas) return null;
     return crtCanvas.toDataURL("image/jpeg", 0.85);
@@ -376,127 +342,181 @@ export default function PhotoboothPage() {
   const shotNum  = Math.min(photos.length + 1, SHOTS_TOTAL);
   const isReview = phase === "review";
 
-
   return (
-    <div style={{ position: "fixed", inset: 0, overflow: "hidden", background: "black" }}>
-      {/* design1 background */}
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src="/design1.png"
-        alt=""
-        style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", filter: "brightness(0.3)", zIndex: 1 }}
-      />
-
-      {/* Film grain overlay */}
-      
-      <FilmGrain />
-
+    <main
+      className="w-screen h-screen overflow-hidden flex flex-col items-center justify-center"
+      style={{ backgroundColor: "#646362", gap: "2vh" }}
+    >
       {/* Hidden camera video */}
       <video ref={videoRef} style={{ display: "none" }} autoPlay playsInline muted />
 
-      {/* Unused bg canvas kept to avoid breaking the render loop ref */}
-      <canvas ref={bgRef} style={{ display: "none" }} />
-      {/* Centre content */}
-      <div style={{
-        position: "absolute", inset: 0, zIndex: 20,
-        display: "flex", flexDirection: "column",
-        alignItems: "center", justifyContent: "center",
-        gap: "20px",
-      }}>
-        <h1
-          className="text-center font-average text-3xl text-white"
-          style={{ maxWidth: "520px" }}
-        >
-          the face of the storyteller
-        </h1>
-        {/* Camera view or review grid */}
-        <div style={{ position: "relative", width: "min(64vh, 60vw)", height: "min(64vh, 60vw)" }}>
-          {/* CRT canvas — always mounted to preserve the WebGL context across redo */}
-          <canvas ref={crtRef} style={{ width: "100%", height: "100%", display: "block", visibility: isReview ? "hidden" : "visible" }} />
+      {/* Title */}
+      <h1
+        style={{
+          color: "white",
+          fontSize: "clamp(1.4rem, 2.6vw, 2.2rem)",
+          lineHeight: 1.15,
+        }}
+      >
+        <span className="font-pixel">T</span>
+        <span className="font-gayatri" style={{ fontStyle: "italic" }}>
+          he face of the storyteller
+        </span>
+      </h1>
 
-          {/* Review grid — overlaid on top when in review phase */}
-          {isReview && (
-            <div style={{ position: "absolute", inset: 0, display: "grid", gridTemplateColumns: "1fr 1fr", gap: "4px" }}>
-              {[0, 1, 2, 3].map((i) => (
-                <div key={i} style={{ background: "#2a2a2a", overflow: "hidden" }}>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  {photos[i] && <img src={photos[i]} alt={`Photo ${i + 1}`} style={{ width: "100%", height: "100%", objectFit: "cover" }} />}
-                </div>
-              ))}
-            </div>
-          )}
+      {/* Camera view */}
+      <div style={{ position: "relative", width: "min(54vh, 45vw)", height: "min(54vh, 45vw)" }}>
+        {/* CRT canvas — always mounted to preserve WebGL context across redo */}
+        <canvas
+          ref={crtRef}
+          style={{
+            width: "100%",
+            height: "100%",
+            display: "block",
+            visibility: isReview ? "hidden" : "visible",
+          }}
+        />
 
-          {/* Flash */}
-          {flash && <div style={{ position: "absolute", inset: 0, background: "white", zIndex: 10 }} />}
+        {/* Review grid */}
+        {isReview && (
+          <div style={{ position: "absolute", inset: 0, display: "grid", gridTemplateColumns: "1fr 1fr", gap: "4px" }}>
+            {[0, 1, 2, 3].map((i) => (
+              <div key={i} style={{ background: "#2a2a2a", overflow: "hidden" }}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                {photos[i] && <img src={photos[i]} alt={`Photo ${i + 1}`} style={{ width: "100%", height: "100%", objectFit: "cover" }} />}
+              </div>
+            ))}
+          </div>
+        )}
 
-          {/* Countdown */}
-          {countdown !== null && (
-            <div style={{
-              position: "absolute", inset: 0, zIndex: 20,
-              display: "flex", alignItems: "center", justifyContent: "center",
+        {/* Flash */}
+        {flash && <div style={{ position: "absolute", inset: 0, background: "white", zIndex: 10 }} />}
+
+        {/* Countdown */}
+        {countdown !== null && (
+          <div style={{
+            position: "absolute", inset: 0, zIndex: 20,
+            display: "flex", alignItems: "center", justifyContent: "center",
+          }}>
+            <span style={{
+              fontSize: "6rem", color: "rgba(255,255,255,0.92)", fontWeight: "bold",
+              textShadow: "0 2px 16px rgba(0,0,0,0.9)", fontFamily: "monospace",
             }}>
-              <span style={{
-                fontSize: "6rem", color: "rgba(255,255,255,0.92)", fontWeight: "bold",
-                textShadow: "0 2px 16px rgba(0,0,0,0.9)", fontFamily: "monospace",
-              }}>
-                {countdown}
-              </span>
-            </div>
-          )}
+              {countdown}
+            </span>
+          </div>
+        )}
 
-          {/* Shot counter */}
-          {!isReview && (
-            <div style={{
-              position: "absolute", bottom: "10px", right: "12px",
-              color: "rgba(255,255,255,0.7)", fontSize: "13px",
-              fontFamily: "font-average",
-              textShadow: "0 1px 4px rgba(0,0,0,0.8)",
-            }}>
-              {shotNum}/{SHOTS_TOTAL}
-            </div>
-          )}
-        </div>
-
-        {/* Buttons */}
-        <div style={{ display: "flex", gap: "10px" }}>
-          {phase === "idle" && (
-            <>
-              <GlassButton
-                onClick={() => void runInteraction(false)}
-                disabled={isCapturing || !hasCamera}
-              >
-                start
-              </GlassButton>
-            </>
-          )}
-
-          {phase === "review" && (
-            <>
-              <GlassButton
-                onClick={() => void runInteraction(true)}
-                disabled={hasRedo || isCapturing || isSaving}
-              >
-                redo
-              </GlassButton>
-              <GlassButton
-                onClick={() => router.push("/final-image")}
-                disabled={isSaving}
-              >
-                next
-              </GlassButton>
-            </>
-          )}
-        </div>
-
-        {error && (
-          <p style={{ color: "rgba(255,180,180,0.9)", fontSize: "12px", fontFamily: "monospace" }}>
-            {error}
-          </p>
+        {/* Shot counter */}
+        {!isReview && (
+          <div style={{
+            position: "absolute", bottom: "10px", right: "12px",
+            color: "rgba(255,255,255,0.7)", fontSize: "13px",
+            textShadow: "0 1px 4px rgba(0,0,0,0.8)",
+          }}>
+            {shotNum}/{SHOTS_TOTAL}
+          </div>
         )}
       </div>
 
+      {/* Buttons */}
+      <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
+        {phase === "idle" && (
+          <button
+            type="button"
+            onClick={() => void runInteraction(false)}
+            disabled={isCapturing || !hasCamera}
+            style={{
+              background: "none", border: "none", padding: 0,
+              cursor: isCapturing || !hasCamera ? "not-allowed" : "pointer",
+              opacity: isCapturing || !hasCamera ? 0.4 : 1,
+              transition: "opacity 0.2s ease, transform 0.15s ease",
+            }}
+            onMouseEnter={(e) => {
+              if (!isCapturing && hasCamera)
+                (e.currentTarget as HTMLButtonElement).style.transform = "scale(1.05)";
+            }}
+            onMouseLeave={(e) => {
+              (e.currentTarget as HTMLButtonElement).style.transform = "scale(1)";
+            }}
+          >
+            <Image src="/buttons/photobooth-start-button.svg" alt="Start" width={100} height={56} />
+          </button>
+        )}
+
+        {phase === "review" && (
+          <>
+            <button
+              type="button"
+              onClick={() => void runInteraction(true)}
+              disabled={hasRedo || isCapturing || isSaving}
+              style={{
+                background: "none", border: "none", padding: 0,
+                cursor: hasRedo || isCapturing || isSaving ? "not-allowed" : "pointer",
+                opacity: hasRedo || isCapturing || isSaving ? 0.4 : 1,
+                transition: "opacity 0.2s ease, transform 0.15s ease",
+              }}
+              onMouseEnter={(e) => {
+                if (!hasRedo && !isCapturing && !isSaving)
+                  (e.currentTarget as HTMLButtonElement).style.transform = "scale(1.05)";
+              }}
+              onMouseLeave={(e) => {
+                (e.currentTarget as HTMLButtonElement).style.transform = "scale(1)";
+              }}
+            >
+              <Image src="/buttons/redo.svg" alt="Redo" width={80} height={45} />
+            </button>
+            <button
+              type="button"
+              onClick={() => router.push("/final-image")}
+              disabled={isSaving}
+              style={{
+                background: "none", border: "none", padding: 0,
+                cursor: isSaving ? "not-allowed" : "pointer",
+                opacity: isSaving ? 0.4 : 1,
+                transition: "opacity 0.2s ease, transform 0.15s ease",
+              }}
+              onMouseEnter={(e) => {
+                if (!isSaving)
+                  (e.currentTarget as HTMLButtonElement).style.transform = "scale(1.05)";
+              }}
+              onMouseLeave={(e) => {
+                (e.currentTarget as HTMLButtonElement).style.transform = "scale(1)";
+              }}
+            >
+              <Image src="/buttons/next-button.svg" alt="Next" width={59} height={47} />
+            </button>
+          </>
+        )}
+      </div>
+
+      {/* Error */}
+      {error && (
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "8px" }}>
+          <p style={{ color: "rgba(255,180,180,0.9)", fontSize: "12px", fontFamily: "monospace", textAlign: "center", maxWidth: "400px" }}>
+            {error}
+          </p>
+          {!hasCamera && (
+            <button
+              type="button"
+              onClick={() => void startCamera()}
+              style={{
+                background: "none", border: "none", padding: 0,
+                cursor: "pointer",
+                transition: "opacity 0.2s ease, transform 0.15s ease",
+                color: "white",
+                fontSize: "clamp(0.8rem, 1.1vw, 1rem)",
+              }}
+              className="font-gayatri"
+            >
+              retry camera
+            </button>
+          )}
+        </div>
+      )}
+
       {/* Hidden capture canvas */}
       <canvas ref={captureRef} style={{ display: "none" }} />
-    </div>
+    </main>
   );
 }

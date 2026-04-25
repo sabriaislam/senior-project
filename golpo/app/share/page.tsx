@@ -3,6 +3,7 @@
 import { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
+import Image from 'next/image';
 import FinalImageOption1, { type FinalImageData } from "@/components/final-image-option-1";
 import FinalImageOption2 from "@/components/final-image-option-2";
 import { getUserDb } from "@/lib/firebase/user-db";
@@ -112,24 +113,28 @@ function SharePageInner() {
       </div>
 
       {/* Right — actions */}
-      <div className="relative flex items-center justify-center p-10" style={{ zIndex: 20 }}>
+      <div className="bg-[#6298DB] relative flex items-center justify-center p-10" style={{ zIndex: 20 }}>
+        <FilmGrain/>
         {/* Top: heading + email form */}
         <div className="w-full max-w-lg flex flex-col justify-start gap-4">
-          <Link
-            href={`/final-image`}
-            className="text-sm font-semibold text-white/80 transition hover:text-white"
-          >
-            ← Back
+          <Link href="/final-image">
+            <button
+              type="button"
+              style={{
+                border: "none",
+                padding: 0,
+                cursor: "pointer",
+                transition: "opacity 0.4s ease, transform 0.2s ease",
+              }}
+              className="hover:scale-105"
+            >
+              <Image src="/buttons/back-button.svg" alt="Back" width={100} height={47} />
+            </button>
           </Link>
 
           <div className="flex flex-col gap-1">
-            <h1
-              className="font-average text-3xl leading-tight"
-              style={{ color: "#ede4e6" }}
-            >
-              keep your story
-            </h1>
-            <p className="font-light leading-tight" style={{ fontSize: "clamp(1rem, 2vw, 1.2rem)", color: "#ede4e6" }}>
+            <span className="text-5xl"><span className="font-pixel">K</span><span className="font-gayatri" style={{ fontStyle: "italic" }}>eep your story</span></span>
+              <p className="font-karla leading-tight text-lg" style={{ color: "#ede4e6" }}>
               email your postcard
             </p>
           </div>
@@ -141,20 +146,21 @@ function SharePageInner() {
                 value={email}
                 onChange={(e) => { setEmail(e.target.value); setSendError(null); }}
                 placeholder="youremail@example.com"
-                className="flex-1 rounded-full border border-white/20 bg-white/20 px-5 py-3 text-sm text-white placeholder-white/50 outline-none transition focus:border-white/80 focus:bg-white/15"
-              />
+                className="font-roboto-mono px-2 py-2 text-base text-black outline-none"
+                style={{
+                  width: "280px",
+                  backgroundColor: "rgba(217, 217, 217, 0.7)",
+                  boxShadow: "inset 0 2px 8px rgba(0,0,0,0.2)",
+                }}              />
               <button
                 type="submit"
                 disabled={isSending || !cardImageUrl}
-                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white text-black transition hover:bg-white/90 disabled:cursor-not-allowed disabled:opacity-50"
                 aria-label="Send"
               >
                 {isSending ? (
                   <span className="text-xs">…</span>
                 ) : (
-                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                    <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
+                  <Image src="/buttons/next-button.svg" alt="Next" width={50} height={47} />
                 )}
               </button>
             </form>
@@ -162,7 +168,7 @@ function SharePageInner() {
             <button
               type="button"
               onClick={() => router.push("/thank-you")}
-              className="text-sm font-medium text-white/70 hover:text-white transition self-start"
+              className="font-karla text-sm font-medium text-white/70 hover:text-white transition self-start"
             >
               no thank you
             </button>
