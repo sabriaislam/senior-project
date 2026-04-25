@@ -1,5 +1,35 @@
 import type { Metadata } from "next";
+import localFont from "next/font/local";
+import { Roboto_Mono } from "next/font/google";
 import "./globals.css";
+
+const blur = localFont({
+  src: "../public/fonts/Blur.ttf",
+  variable: "--font-blur",
+});
+
+const karla = localFont({
+  src: "../public/fonts/Karla-Regular-S52ZIU5L.3ac28a6ac03a9f7f3d82.woff",
+  variable: "--font-karla",
+});
+
+const pixel = localFont({
+  src: "../public/fonts/PFPixelscriptPro.ttf",
+  variable: "--font-pixel",
+});
+
+const gayatri = localFont({
+  src: [
+    { path: "../public/fonts/gayatrial-regular.otf", style: "normal" },
+    { path: "../public/fonts/gayatrial-italic.otf", style: "italic" },
+  ],
+  variable: "--font-gayatri",
+});
+
+const robotoMono = Roboto_Mono({
+  subsets: ["latin"],
+  variable: "--font-roboto-mono",
+});
 
 export const metadata: Metadata = {
   title: "Create Next App",
@@ -14,7 +44,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className="antialiased"
+        className={`antialiased ${blur.variable} ${karla.variable} ${pixel.variable} ${gayatri.variable} ${robotoMono.variable}`}
       >
         {children}
       </body>

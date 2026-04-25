@@ -2,13 +2,14 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { getLastEntry, type ResponseEntry } from "@/lib/firebase/user-db";
-import { PageShell } from "@/components/page-shell";
 
 export default function StoryPage() {
   const [entry, setEntry] = useState<ResponseEntry | null>(null);
   const [showNav, setShowNav] = useState(false);
+  const [pressed, setPressed] = useState(false);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
     let mounted = true;
@@ -20,73 +21,143 @@ export default function StoryPage() {
     return () => { mounted = false; };
   }, []);
 
-  return (
-    <PageShell videoSrc="/cat.MOV" brightness={0.35}>
-      {/* Content */}
-      <div
-        className="absolute inset-0 flex items-center"
-        style={{ zIndex: 20, padding: "0 6vw", opacity: entry ? 1 : 0, transition: "opacity 0.4s ease" }}
-      >
-        {/* Left — label */}
-        <div className="flex-1 pr-12">
-          <p
-            className="text-white leading-tight"
-            style={{ fontSize: "clamp(1.6rem, 3vw, 2.4rem)" }}
-          >
-            this is{" "}
-            <strong style={{ fontWeight: 700 }}>{entry?.name}&apos;s</strong>{" "}
-            story
-          </p>
-        </div>
+  // Film grain canvas
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
 
-        {/* Right — entry card */}
+    const GRAIN_SIZE = 0.5;
+    let animFrame: number;
+
+    function resize() {
+      canvas!.width = Math.ceil(window.innerWidth / GRAIN_SIZE);
+      canvas!.height = Math.ceil(window.innerHeight / GRAIN_SIZE);
+    }
+
+    function drawGrain() {
+      const w = canvas!.width;
+      const h = canvas!.height;
+      const imageData = ctx!.createImageData(w, h);
+      const data = imageData.data;
+      for (let i = 0; i < data.length; i += 4) {
+        const v = (Math.random() * 255) | 0;
+        data[i] = v;
+        data[i + 1] = v;
+        data[i + 2] = v;
+        data[i + 3] = 30;
+      }
+      ctx!.putImageData(imageData, 0, 0);
+      animFrame = requestAnimationFrame(drawGrain);
+    }
+
+    resize();
+    drawGrain();
+    window.addEventListener("resize", resize);
+
+    return () => {
+      cancelAnimationFrame(animFrame);
+      window.removeEventListener("resize", resize);
+    };
+  }, []);
+
+  const heading = `this is ${entry?.name ?? ""}${entry?.name ? "’s" : ""} story`;
+  const firstChar = "t";
+  const rest = heading.slice(1);
+
+  return (
+    <main className="relative w-screen h-screen overflow-hidden flex">
+      {/* Film grain overlay */}
+      <canvas
+        ref={canvasRef}
+        className="absolute inset-0 pointer-events-none"
+        style={{ zIndex: 30, imageRendering: "pixelated", width: "100%", height: "100%" }}
+      />
+
+      {/* Left panel — solid green */}
+      <div
+        className="relative flex flex-col justify-end"
+        style={{
+          width: "50%",
+          backgroundColor: "#93D892",
+          paddingLeft: "8%",
+          paddingRight: "6%",
+          paddingBottom: "10%",
+          zIndex: 10,
+          opacity: entry ? 1 : 0,
+          transition: "opacity 0.4s ease",
+        }}
+      >
+        <h1 className="text-left leading-tight mb-6" style={{ fontSize: "3rem", color:"#003330"}}>
+          <span className="font-pixel" style={{ fontSize: "3rem" }}>{firstChar.toUpperCase()}</span>
+          <span className="font-gayatri" style={{ fontStyle: "italic" }}>{rest}</span>
+        </h1>
+
+        {entry?.storyCategory ? (
+          <p className="font-gayatri text-sm mb-2" style={{ color: "#1a3a1a", opacity: 0.75, fontSize: "1rem"}}>
+            {entry.storyCategory}
+          </p>
+        ) : null}
+
+        {entry?.chosenQuestion ? (
+          <p
+            className="font-roboto-mono font-bold leading-relaxed mb-4"
+            style={{ fontSize: "0.95rem", color: "#1a3a1a", maxWidth: "90%" }}
+          >
+            {entry.chosenQuestion}
+          </p>
+        ) : null}
+
+        {entry?.answerText ? (
+          <p
+            className="font-roboto-mono leading-relaxed mb-4"
+            style={{ fontSize: "0.85rem", color: "#1a1a1a", maxWidth: "90%" }}
+          >
+            {entry.answerText}
+          </p>
+        ) : null}
+
+      </div>
+
+      {/* Right panel — gray placeholder for video */}
+      <div className="relative flex-1" style={{ backgroundColor: "#9E9E9E" }}>
+        {/* Nav button */}
         <div
-          className="flex-1"
+          className="absolute transition-opacity duration-1000"
           style={{
-            backgroundColor: "rgba(90,90,90,0.75)",
-            border: "1px solid rgba(255,255,255,0.25)",
-            borderRadius: "1.25rem",
-            padding: "2rem",
-            display: "flex",
-            flexDirection: "column",
-            gap: "1.25rem",
+            bottom: "10%",
+            right: "8%",
+            opacity: showNav ? 1 : 0,
+            pointerEvents: showNav ? "auto" : "none",
+            zIndex: 20,
           }}
         >
-          {entry?.storyCategory ? (
-            <p
-              className="font-average text-3xl leading-tight"
-              style={{ color: "#ede4e6" }}
-            >
-              {entry.storyCategory.toLowerCase()}
-            </p>
-          ) : null}
-          <p
-            className="font-light leading-tight"
-            style={{ fontSize: "clamp(1rem, 2vw, 1.2rem)", color: "#ede4e6" }}
+          <Link
+            href="/name"
+            onMouseDown={() => setPressed(true)}
+            onMouseUp={() => setPressed(false)}
+            onMouseLeave={() => setPressed(false)}
+            onTouchStart={() => setPressed(true)}
+            onTouchEnd={() => setPressed(false)}
+            style={{
+              display: "inline-block",
+              transform: pressed ? "scale(0.88)" : "scale(1)",
+              filter: pressed ? "brightness(0.8)" : "brightness(1)",
+              transition: pressed
+                ? "transform 0.08s ease, filter 0.08s ease"
+                : "transform 0.25s cubic-bezier(0.34,1.56,0.64,1), filter 0.25s ease",
+            }}
           >
-            {entry?.chosenQuestion}
-          </p>
-          <p
-            className="leading-relaxed"
-            style={{ fontSize: "1rem", color: "#ede4e6" }}
-          >
-            {entry?.answerText}
-          </p>
+            <Image
+              src="/buttons/whats-yours.svg"
+              alt="What's yours?"
+              width={170}
+              height={64}
+            />
+          </Link>
         </div>
       </div>
-
-      {/* Next arrow */}
-      <div
-        className="absolute transition-opacity duration-1000"
-        style={{ bottom: "2.5rem", right: "6vw", zIndex: 30, opacity: showNav ? 1 : 0, pointerEvents: showNav ? "auto" : "none" }}
-      >
-        <Link
-          href="/name"
-          className="glass-nav flex items-center justify-center w-12 h-12 rounded-full transition-all hover:scale-105"
-        >
-          <Image src="/arrow.svg" alt="Next" width={18} height={16} style={{ opacity: 0.7 }} />
-        </Link>
-      </div>
-    </PageShell>
+    </main>
   );
 }

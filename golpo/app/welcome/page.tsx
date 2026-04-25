@@ -2,13 +2,13 @@
 
 import Image from "next/image";
 import { useEffect, useState } from "react";
-import { GlassButton } from "@/components/glass-button";
 import { PageShell } from "@/components/page-shell";
 
 
 export default function WelcomePage() {
   const [showText, setShowText] = useState(false);
   const [showNext, setShowNext] = useState(false);
+  const [pressed, setPressed] = useState(false);
 
   useEffect(() => {
     const t1 = setTimeout(() => setShowText(true), 50);
@@ -17,7 +17,31 @@ export default function WelcomePage() {
   }, []);
 
   return (
-    <PageShell videoSrc="/firstpage.mp4">
+    <PageShell videoSrc="/firstpage.mp4" brightness={0.7}>
+      {/* Color overlay over video, below text */}
+      <div
+        className="absolute inset-0"
+        style={{ background: "#DB62A0", mixBlendMode: "multiply", zIndex: 3, opacity: 0.8}}
+      />
+
+      {/* Decorative stars */}
+      <Image
+        src="/buttons/star-1.svg"
+        alt=""
+        width={130}
+        height={0}
+        className="absolute pointer-events-none"
+        style={{ left: "18%", top: "10%", zIndex: 10, height: "auto"}}
+      />
+      <Image
+        src="/buttons/star-2.svg"
+        alt=""
+        width={150}
+        height={0}
+        className="absolute pointer-events-none"
+        style={{ left: "65%", top: "55%", zIndex: 10, height: "auto" }}
+      />
+
       {/* Intro content — GOLPO logo, subtitle, next button */}
       <div
         className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none"
@@ -33,7 +57,7 @@ export default function WelcomePage() {
         />
 
         <div
-          className="text-white text-center"
+          className="text-white text-center font-[var(--font-karla)]"
           style={{
             marginTop: "1rem",
             fontSize: "1.45rem",
@@ -55,9 +79,24 @@ export default function WelcomePage() {
             pointerEvents: showNext ? "auto" : "none",
           }}
         >
-          <GlassButton href="/story" className="transition-all hover:scale-105 font-bold">
-            begin
-          </GlassButton>
+          <a
+            href="/story"
+            onMouseDown={() => setPressed(true)}
+            onMouseUp={() => setPressed(false)}
+            onMouseLeave={() => setPressed(false)}
+            onTouchStart={() => setPressed(true)}
+            onTouchEnd={() => setPressed(false)}
+            style={{
+              display: "inline-block",
+              transform: pressed ? "scale(0.88)" : "scale(1)",
+              filter: pressed ? "brightness(0.8)" : "brightness(1)",
+              transition: pressed
+                ? "transform 0.08s ease, filter 0.08s ease"
+                : "transform 0.25s cubic-bezier(0.34,1.56,0.64,1), filter 0.25s ease",
+            }}
+          >
+            <Image src="/buttons/start-button.svg" alt="begin" width={110} height={42} />
+          </a>
         </div>
       </div>
     </PageShell>

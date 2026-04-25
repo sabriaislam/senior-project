@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   createNewSession,
   defaultDraft,
@@ -10,6 +10,7 @@ import {
   type InstallationDraft,
 } from "@/lib/installation-cache";
 import { updateUserDb } from "@/lib/firebase/user-db";
+import { PageShell } from "@/components/page-shell";
 
 export default function NamePage() {
   const router = useRouter();
@@ -17,7 +18,6 @@ export default function NamePage() {
   const [loaded, setLoaded] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
     try {
@@ -37,47 +37,6 @@ export default function NamePage() {
     if (!loaded) return;
     window.localStorage.setItem(INSTALLATION_CACHE_KEY, JSON.stringify(draft));
   }, [draft, loaded]);
-
-  // Film grain canvas
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-
-    const GRAIN_SIZE = 1.7;
-    let animFrame: number;
-
-    function resize() {
-      canvas!.width = Math.ceil(window.innerWidth / GRAIN_SIZE);
-      canvas!.height = Math.ceil(window.innerHeight / GRAIN_SIZE);
-    }
-
-    function drawGrain() {
-      const w = canvas!.width;
-      const h = canvas!.height;
-      const imageData = ctx!.createImageData(w, h);
-      const data = imageData.data;
-      for (let i = 0; i < data.length; i += 4) {
-        const v = (Math.random() * 255) | 0;
-        data[i] = v;
-        data[i + 1] = v;
-        data[i + 2] = v;
-        data[i + 3] = 38;
-      }
-      ctx!.putImageData(imageData, 0, 0);
-      animFrame = requestAnimationFrame(drawGrain);
-    }
-
-    resize();
-    drawGrain();
-    window.addEventListener("resize", resize);
-
-    return () => {
-      cancelAnimationFrame(animFrame);
-      window.removeEventListener("resize", resize);
-    };
-  }, []);
 
   async function handleSubmit(event: React.SyntheticEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -100,65 +59,67 @@ export default function NamePage() {
   }
 
   return (
-    <main className="relative w-screen h-screen overflow-hidden bg-black">
-      {/* Layer 1: Video */}
-      <video
-        src="/train.mp4"
-        autoPlay
-        loop
-        muted
-        playsInline
-        className="absolute inset-0 w-full h-full object-cover"
-      />
-
-      {/* Layer 3: Content — horizontal position controlled by `paddingLeft`, vertical by `justifyContent` */}
+    <PageShell videoSrc="/name.mov">
       <div
-        className="absolute inset-0 flex flex-col justify-end gap-6"
-        style={{
-          zIndex: 20,
-          paddingLeft: "8%", /* ← shift left/right */
-          paddingRight: "5%",
-          paddingBottom: "10%", /* ← shift up/down */
-        }}
+        className="absolute inset-0"
+        style={{ zIndex: 20 }}
       >
-        <h1
-          className="font-vollkorn text-3xl text-left leading-tight text-white whitespace-nowrap"
-          style={{ textShadow: "0 2px 16px rgba(0,0,0,0.6)" }}
+        {/* Floating blue card */}
+        <div
+          style={{
+            position: "absolute",
+            left: "7.3%",
+            bottom: "7.2%",
+            width: "71.6%",
+            backgroundColor: "#6298DB",
+            padding: "2.5rem 2.5rem 3rem 4rem",
+          }}
         >
-          what name do you want to be remembered by?
-        </h1>
+          <h1
+            className="text-white mb-6"
+            style={{ fontSize: "2.4rem", lineHeight: 1.2 }}
+          >
+            <span className="font-pixel">W</span>
+            <span className="font-gayatri" style={{ fontStyle: "italic" }}>hat name do you want to be remembered by?</span>
+          </h1>
 
-        <form id="name-form" onSubmit={handleSubmit}>
-          <div className="flex items-center gap-3">
-            <input
-              type="text"
-              value={draft.name}
-              onChange={(e) =>
-                setDraft((prev: InstallationDraft) => ({ ...prev, name: e.target.value }))
-              }
-              className="w-xs rounded-full px-3 py-3 text-base text-black outline-none"
-              style={{
-                backgroundColor: "rgba(217, 217, 217, 0.7)",
-                boxShadow: "inset 0 2px 8px rgba(0,0,0,0.2)",
-              }}
-            />
-            <button
-              type="submit"
-              disabled={isSaving}
-              className="glass-nav flex items-center justify-center w-12 h-12 rounded-full transition-all hover:scale-105 disabled:opacity-40"
-              style={{
-                opacity: draft.name.trim() ? 1 : 0,
-                pointerEvents: draft.name.trim() ? "auto" : "none",
-                transition: "opacity 0.4s ease, transform 0.2s ease",
-              }}
-            >
-              <Image src="/arrow.svg" alt="Next" width={18} height={16} style={{ opacity: 0.7 }} />
-            </button>
-          </div>
-        </form>
+          <form onSubmit={handleSubmit}>
+            <div className="flex items-center gap-3">
+              <input
+                type="text"
+                value={draft.name}
+                onChange={(e) =>
+                  setDraft((prev: InstallationDraft) => ({ ...prev, name: e.target.value }))
+                }
+                className="font-roboto-mono px-2 py-2 text-base text-black outline-none"
+                style={{
+                  width: "280px",
+                  backgroundColor: "rgba(217, 217, 217, 0.7)",
+                  boxShadow: "inset 0 2px 8px rgba(0,0,0,0.2)",
+                }}
+              />
+              <button
+                type="submit"
+                disabled={isSaving}
+                style={{
+                  opacity: draft.name.trim() ? 1 : 0,
+                  pointerEvents: draft.name.trim() ? "auto" : "none",
+                  transition: "opacity 0.4s ease, transform 0.2s ease",
+                  background: "none",
+                  border: "none",
+                  padding: 0,
+                  cursor: "pointer",
+                }}
+                className="hover:scale-105 disabled:opacity-40"
+              >
+                <Image src="/buttons/next-button.svg" alt="Next" width={59} height={47} />
+              </button>
+            </div>
+          </form>
 
-        {error ? <p className="text-sm text-red-300">{error}</p> : null}
+          {error ? <p className="text-sm text-red-300 mt-2">{error}</p> : null}
+        </div>
       </div>
-    </main>
+    </PageShell>
   );
 }

@@ -17,6 +17,18 @@
   letter-spacing: -0.05em;
 }
 
+.font-pixel {
+  font-family: var(--font-pixel) !important;
+}
+
+.font-gayatri {
+  font-family: var(--font-gayatri) !important;
+}
+
+.font-roboto-mono {
+  font-family: var(--font-roboto-mono) !important;
+}
+
 
 @media (prefers-color-scheme: dark) {
   :root {
@@ -25,10 +37,38 @@
   }
 }
 
+html, body, * {
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif !important;
+}
+
 html, body {
   background: var(--background);
   color: var(--foreground);
+}
+
+/* Retro nav button */
+.retro-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 1.5px solid rgba(255, 255, 255, 0.75);
+  color: white;
+  padding: 0.5rem 1rem;
   font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, opacity 0.15s;
+  text-decoration: none;
+}
+
+.retro-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.retro-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
 }
 
 /* Glass pill action button */

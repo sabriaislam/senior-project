@@ -53,7 +53,7 @@ export function FilmGrain() {
         height: "100%",
         imageRendering: "pixelated",
         mixBlendMode: "overlay",
-        opacity: 0.55,
+        opacity: 0.22,
         zIndex: 10,
       }}
     />
