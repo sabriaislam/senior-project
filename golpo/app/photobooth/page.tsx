@@ -14,134 +14,11 @@ function wait(ms: number): Promise<void> {
   return new Promise((r) => window.setTimeout(r, ms));
 }
 
-// ─── WebGL shaders (CRT broadcast effect) ───────────────────────
-const VERT = `
-attribute vec2 a_pos;
-varying vec2 v_uv;
-void main(){
-  v_uv = a_pos * 0.5 + 0.5;
-  gl_Position = vec4(a_pos, 0.0, 1.0);
-}`;
-
-const FRAG = `
-precision highp float;
-varying vec2 v_uv;
-uniform sampler2D u_cam;
-uniform float u_time;
-uniform float u_curvature;
-uniform float u_scanlines;
-uniform float u_scanIntensity;
-uniform float u_phosphor;
-uniform float u_brightness;
-uniform float u_chroma;
-uniform float u_rgbShift;
-uniform float u_noise;
-uniform float u_lineDisp;
-uniform float u_syncErr;
-uniform float u_interfere;
-uniform float u_size;
-uniform vec2  u_camAspect;
-
-float hash(vec2 p){ return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453); }
-float hash1(float n){ return fract(sin(n)*43758.5453); }
-
-vec2 barrel(vec2 uv, float amount){
-  vec2 cc = uv - 0.5;
-  return uv + cc * dot(cc,cc) * amount;
-}
-float vignette(vec2 uv){
-  uv = uv * 2.0 - 1.0;
-  return 1.0 - dot(uv*0.65, uv*0.65);
-}
-vec2 cropUV(vec2 uv){
-  float aspect = u_camAspect.x;
-  float show = 1.0 / aspect;
-  float offset = (1.0 - show) * 0.5;
-  return vec2(offset + uv.x * show, uv.y);
-}
-vec3 phosphorSample(vec2 uv, float spread){
-  float px = 1.0 / u_size;
-  vec3 col  = texture2D(u_cam, uv).rgb;
-  vec3 colL = texture2D(u_cam, uv - vec2(px * spread, 0.0)).rgb;
-  vec3 colR = texture2D(u_cam, uv + vec2(px * spread, 0.0)).rgb;
-  return mix(col, (col + colL*0.4 + colR*0.4) / 1.8, u_phosphor);
-}
-
-void main(){
-  float t = u_time;
-  vec2 uv = v_uv;
-  uv.x = 1.0 - uv.x;
-  uv.y = 1.0 - uv.y;
-
-  float lineRow  = floor(uv.y * 200.0);
-  float dispSeed = hash1(lineRow * 0.1 + floor(t * 3.0) * 7.3);
-  uv.x += step(0.97, dispSeed) * (hash1(lineRow + t) * 2.0 - 1.0) * u_lineDisp;
-
-  float syncSeed   = hash1(floor(t * 1.5));
-  float syncActive = step(1.0 - u_syncErr * 5.0, syncSeed);
-  float syncRow    = hash1(floor(t * 1.5) * 13.7);
-  float syncZone   = step(0.0, uv.y - syncRow) * step(0.0, syncRow + 0.04 - uv.y);
-  uv.x += syncActive * syncZone * (hash1(syncRow) * 2.0 - 1.0) * 0.08;
-
-  vec2 curved = barrel(uv, u_curvature * 0.04);
-  if(curved.x < 0.0 || curved.x > 1.0 || curved.y < 0.0 || curved.y > 1.0){
-    gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0); return;
-  }
-
-  vec2 camUV  = cropUV(curved);
-  vec2 camUVL = cropUV(curved + vec2( u_chroma + u_rgbShift, 0.0));
-  vec2 camUVR = cropUV(curved - vec2( u_chroma + u_rgbShift, 0.0));
-
-  float r = phosphorSample(camUVL, 2.0).r;
-  float g = phosphorSample(camUV,  2.0).g;
-  float b = phosphorSample(camUVR, 2.0).b;
-
-  if(u_rgbShift > 0.001){
-    float rs = u_rgbShift;
-    r = texture2D(u_cam, cropUV(curved + vec2( rs,  rs * 0.3))).r;
-    b = texture2D(u_cam, cropUV(curved + vec2(-rs, -rs * 0.3))).b;
-  }
-
-  vec3 col = vec3(r, g, b);
-  float scan = sin(curved.y * u_scanlines * 3.14159) * 0.5 + 0.5;
-  col *= 1.0 - u_scanIntensity * (1.0 - pow(scan, 1.2));
-
-  float interfereY    = fract(curved.y - t * 0.3);
-  float interfereLine = smoothstep(0.0, 0.02, interfereY) * smoothstep(0.04, 0.02, interfereY);
-  col += vec3(0.4, 0.8, 0.4) * interfereLine * hash(vec2(curved.x * 10.0, floor(t * 10.0))) * u_interfere;
-
-  float n = hash(curved * (u_size / 3.0) + vec2(t * 97.3, t * 13.7));
-  col += (n - 0.5) * u_noise;
-
-  col *= u_brightness;
-  col *= vignette(curved) * 1.1;
-  col.g *= 1.02;
-  gl_FragColor = vec4(clamp(col, 0.0, 1.0), 1.0);
-}`;
-
-const PRESET = {
-  curvature: 0.9, scanlines: 498, scanIntensity: 0.23, phosphor: 0.24,
-  brightness: 1.05, chroma: 0.0059, rgbShift: 0.002, noise: 0.13,
-  lineDisp: 0, syncErr: 0.006, interfere: 0.02,
-};
-
-type GlState = {
-  gl: WebGLRenderingContext;
-  tex: WebGLTexture;
-  u: { [k: string]: WebGLUniformLocation | null };
-  t: number;
-};
-
 export default function PhotoboothPage() {
   const router = useRouter();
   const videoRef   = useRef<HTMLVideoElement | null>(null);
-  const crtRef     = useRef<HTMLCanvasElement | null>(null);
   const captureRef = useRef<HTMLCanvasElement | null>(null);
   const streamRef  = useRef<MediaStream | null>(null);
-  const glRef      = useRef<GlState | null>(null);
-  const animRef    = useRef<number>(0);
-  const camWRef    = useRef(1280);
-  const camHRef    = useRef(720);
 
   const [photos,      setPhotos]      = useState<string[]>([]);
   const [phase,       setPhase]       = useState<"idle" | "capturing" | "review">("idle");
@@ -152,54 +29,7 @@ export default function PhotoboothPage() {
   const [flash,       setFlash]       = useState(false);
   const [hasRedo,     setHasRedo]     = useState(false);
   const [error,       setError]       = useState<string | null>(null);
-
-  const initGL = useCallback(() => {
-    const canvas = crtRef.current;
-    if (!canvas || glRef.current) return;
-    canvas.width = 600;
-    canvas.height = 600;
-    const gl = canvas.getContext("webgl", { antialias: false, preserveDrawingBuffer: true });
-    if (!gl) return;
-
-    const mkShader = (type: number, src: string) => {
-      const s = gl.createShader(type)!;
-      gl.shaderSource(s, src);
-      gl.compileShader(s);
-      return s;
-    };
-    const prog = gl.createProgram()!;
-    gl.attachShader(prog, mkShader(gl.VERTEX_SHADER, VERT));
-    gl.attachShader(prog, mkShader(gl.FRAGMENT_SHADER, FRAG));
-    gl.linkProgram(prog);
-    gl.useProgram(prog);
-
-    const buf = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, buf);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1, 1,-1, -1,1, 1,1]), gl.STATIC_DRAW);
-    const ap = gl.getAttribLocation(prog, "a_pos");
-    gl.enableVertexAttribArray(ap);
-    gl.vertexAttribPointer(ap, 2, gl.FLOAT, false, 0, 0);
-
-    const tex = gl.createTexture()!;
-    gl.bindTexture(gl.TEXTURE_2D, tex);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-
-    const U = (n: string) => gl.getUniformLocation(prog, n);
-    glRef.current = {
-      gl, tex, t: 0,
-      u: {
-        cam:   U("u_cam"),   time:  U("u_time"),  size:  U("u_size"),
-        asp:   U("u_camAspect"),
-        curv:  U("u_curvature"), scan:  U("u_scanlines"), scanI: U("u_scanIntensity"),
-        phos:  U("u_phosphor"),  bri:   U("u_brightness"), chrom: U("u_chroma"),
-        rgb:   U("u_rgbShift"),  noise: U("u_noise"),     lineD: U("u_lineDisp"),
-        sync:  U("u_syncErr"),   inter: U("u_interfere"),
-      },
-    };
-  }, []);
+  const [pressedBtn,  setPressedBtn]  = useState<string | null>(null);
 
   const startCamera = useCallback(async () => {
     if (streamRef.current?.active) { setHasCamera(true); return; }
@@ -218,8 +48,6 @@ export default function PhotoboothPage() {
       if (v) {
         v.srcObject = stream;
         await v.play();
-        camWRef.current = v.videoWidth  || 1280;
-        camHRef.current = v.videoHeight || 720;
       }
       setHasCamera(true);
     } catch (e) {
@@ -239,60 +67,29 @@ export default function PhotoboothPage() {
   }, []);
 
   useEffect(() => {
-    void startCamera().then(() => initGL());
-
+    void startCamera();
     return () => {
-      cancelAnimationFrame(animRef.current);
       streamRef.current?.getTracks().forEach((t) => t.stop());
       streamRef.current = null;
     };
-  }, [startCamera, initGL]);
-
-  useEffect(() => {
-    let running = true;
-    function loop() {
-      if (!running) return;
-      animRef.current = requestAnimationFrame(loop);
-      const video = videoRef.current;
-      if (!video || video.readyState < 2) return;
-
-      const gx = glRef.current;
-      const crtCanvas = crtRef.current;
-      if (gx && crtCanvas) {
-        const { gl, tex, u } = gx;
-        gl.viewport(0, 0, crtCanvas.width, crtCanvas.height);
-        gl.bindTexture(gl.TEXTURE_2D, tex);
-        gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
-        try { gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, video); } catch { /* skip if not ready */ }
-        gl.clearColor(0, 0, 0, 1);
-        gl.clear(gl.COLOR_BUFFER_BIT);
-        gl.uniform1i(u.cam, 0);
-        gl.uniform1f(u.time, gx.t);
-        gl.uniform1f(u.size, crtCanvas.width);
-        gl.uniform2f(u.asp, camWRef.current / camHRef.current, 1.0);
-        gl.uniform1f(u.curv,  PRESET.curvature);
-        gl.uniform1f(u.scan,  PRESET.scanlines);
-        gl.uniform1f(u.scanI, PRESET.scanIntensity);
-        gl.uniform1f(u.phos,  PRESET.phosphor);
-        gl.uniform1f(u.bri,   PRESET.brightness);
-        gl.uniform1f(u.chrom, PRESET.chroma);
-        gl.uniform1f(u.rgb,   PRESET.rgbShift);
-        gl.uniform1f(u.noise, PRESET.noise);
-        gl.uniform1f(u.lineD, PRESET.lineDisp);
-        gl.uniform1f(u.sync,  PRESET.syncErr);
-        gl.uniform1f(u.inter, PRESET.interfere);
-        gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
-        gx.t += 0.016;
-      }
-    }
-    loop();
-    return () => { running = false; };
-  }, []);
+  }, [startCamera]);
 
   function captureFrame() {
-    const crtCanvas = crtRef.current;
-    if (!crtCanvas) return null;
-    return crtCanvas.toDataURL("image/jpeg", 0.85);
+    const video = videoRef.current;
+    const canvas = captureRef.current;
+    if (!video || !canvas) return null;
+    // Scale down to ~640px wide to stay under Firestore's 1MB document limit
+    const srcW = video.videoWidth  || 1280;
+    const srcH = video.videoHeight || 720;
+    const scale = Math.min(1, 640 / srcW);
+    canvas.width  = Math.round(srcW * scale);
+    canvas.height = Math.round(srcH * scale);
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return null;
+    ctx.translate(canvas.width, 0);
+    ctx.scale(-1, 1);
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    return canvas.toDataURL("image/jpeg", 0.75);
   }
 
   async function runInteraction(isRedo: boolean) {
@@ -345,16 +142,54 @@ export default function PhotoboothPage() {
   return (
     <main
       className="w-screen h-screen overflow-hidden flex flex-col items-center justify-center"
-      style={{ backgroundColor: "#646362", gap: "2vh" }}
+      style={{ backgroundColor: "#DB62A0", gap: "2vh" }}
     >
-      {/* Hidden camera video */}
-      <video ref={videoRef} style={{ display: "none" }} autoPlay playsInline muted />
+      {/* design3 overlay — full page, 180°, below all content */}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src="/bg/design3.png"
+        alt=""
+        aria-hidden
+        style={{
+          position: "absolute",
+          inset: 0,
+          width: "100%",
+          height: "100%",
+          objectFit: "cover",
+          opacity: "30%",
+          transform: "rotate(180deg)",
+          mixBlendMode: "screen",
+          pointerEvents: "none",
+          zIndex: 1,
+        }}
+      />
+
+      {/* stamp-h — behind content, above design3 */}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src="/bg/stamp-h.png"
+        alt=""
+        aria-hidden
+        style={{
+          position: "absolute",
+          top: "1--%",
+          left: "50%",
+          transform: "translate(-50%, -3%) scale(1.8)",
+          width: "min(90vw, 90vh)",
+          height: "auto",
+          pointerEvents: "none",
+          zIndex: 1,
+        }}
+      />
+
+      {/* Content — sits above the overlay */}
+      <div style={{ position: "relative", zIndex: 2, display: "flex", flexDirection: "column", alignItems: "center", gap: "2vh", width: "100%" }}>
 
       {/* Title */}
       <h1
         style={{
-          color: "white",
-          fontSize: "clamp(1.4rem, 2.6vw, 2.2rem)",
+          color: "#6298DB",
+          fontSize: "clamp(3rem, 2.6vw, 2.2rem)",
           lineHeight: 1.15,
         }}
       >
@@ -366,14 +201,19 @@ export default function PhotoboothPage() {
 
       {/* Camera view */}
       <div style={{ position: "relative", width: "min(54vh, 45vw)", height: "min(54vh, 45vw)" }}>
-        {/* CRT canvas — always mounted to preserve WebGL context across redo */}
-        <canvas
-          ref={crtRef}
+        {/* Live video feed */}
+        <video
+          ref={videoRef}
+          autoPlay
+          playsInline
+          muted
           style={{
             width: "100%",
             height: "100%",
-            display: "block",
-            visibility: isReview ? "hidden" : "visible",
+            objectFit: "cover",
+            display: isReview ? "none" : "block",
+            transform: "scaleX(-1)",
+            border: "2px white"
           }}
         />
 
@@ -410,13 +250,34 @@ export default function PhotoboothPage() {
         {/* Shot counter */}
         {!isReview && (
           <div style={{
-            position: "absolute", bottom: "10px", right: "12px",
+            position: "absolute", bottom: "10px", left: "12px",
             color: "rgba(255,255,255,0.7)", fontSize: "13px",
             textShadow: "0 1px 4px rgba(0,0,0,0.8)",
+            zIndex: 2,
           }}>
             {shotNum}/{SHOTS_TOTAL}
           </div>
         )}
+
+        {/* Corner star — top left */}
+        <Image
+          src="/buttons/corner-star-1.svg"
+          alt=""
+          aria-hidden
+          width={80}
+          height={80}
+          style={{ position: "absolute", top: -20, left: -40, zIndex: 15, pointerEvents: "none" }}
+        />
+
+        {/* Corner star — bottom right */}
+        <Image
+          src="/buttons/corner-star-2.svg"
+          alt=""
+          aria-hidden
+          width={80}
+          height={80}
+          style={{ position: "absolute", bottom: -30, right: -30, zIndex: 15, pointerEvents: "none" }}
+        />
       </div>
 
       {/* Buttons */}
@@ -426,21 +287,24 @@ export default function PhotoboothPage() {
             type="button"
             onClick={() => void runInteraction(false)}
             disabled={isCapturing || !hasCamera}
+            onMouseDown={() => setPressedBtn("start")}
+            onMouseUp={() => setPressedBtn(null)}
+            onMouseLeave={() => setPressedBtn(null)}
+            onTouchStart={() => setPressedBtn("start")}
+            onTouchEnd={() => setPressedBtn(null)}
             style={{
               background: "none", border: "none", padding: 0,
               cursor: isCapturing || !hasCamera ? "not-allowed" : "pointer",
               opacity: isCapturing || !hasCamera ? 0.4 : 1,
-              transition: "opacity 0.2s ease, transform 0.15s ease",
-            }}
-            onMouseEnter={(e) => {
-              if (!isCapturing && hasCamera)
-                (e.currentTarget as HTMLButtonElement).style.transform = "scale(1.05)";
-            }}
-            onMouseLeave={(e) => {
-              (e.currentTarget as HTMLButtonElement).style.transform = "scale(1)";
+              display: "inline-block",
+              transform: pressedBtn === "start" ? "scale(0.88)" : "scale(1)",
+              filter: pressedBtn === "start" ? "brightness(0.8)" : "brightness(1)",
+              transition: pressedBtn === "start"
+                ? "transform 0.08s ease, filter 0.08s ease"
+                : "transform 0.25s cubic-bezier(0.34,1.56,0.64,1), filter 0.25s ease",
             }}
           >
-            <Image src="/buttons/photobooth-start-button.svg" alt="Start" width={100} height={56} />
+            <Image src="/buttons/blue-start-button.svg" alt="Start" width={100} height={56} />
           </button>
         )}
 
@@ -450,18 +314,21 @@ export default function PhotoboothPage() {
               type="button"
               onClick={() => void runInteraction(true)}
               disabled={hasRedo || isCapturing || isSaving}
+              onMouseDown={() => setPressedBtn("redo")}
+              onMouseUp={() => setPressedBtn(null)}
+              onMouseLeave={() => setPressedBtn(null)}
+              onTouchStart={() => setPressedBtn("redo")}
+              onTouchEnd={() => setPressedBtn(null)}
               style={{
                 background: "none", border: "none", padding: 0,
                 cursor: hasRedo || isCapturing || isSaving ? "not-allowed" : "pointer",
                 opacity: hasRedo || isCapturing || isSaving ? 0.4 : 1,
-                transition: "opacity 0.2s ease, transform 0.15s ease",
-              }}
-              onMouseEnter={(e) => {
-                if (!hasRedo && !isCapturing && !isSaving)
-                  (e.currentTarget as HTMLButtonElement).style.transform = "scale(1.05)";
-              }}
-              onMouseLeave={(e) => {
-                (e.currentTarget as HTMLButtonElement).style.transform = "scale(1)";
+                display: "inline-block",
+                transform: pressedBtn === "redo" ? "scale(0.88)" : "scale(1)",
+                filter: pressedBtn === "redo" ? "brightness(0.8)" : "brightness(1)",
+                transition: pressedBtn === "redo"
+                  ? "transform 0.08s ease, filter 0.08s ease"
+                  : "transform 0.25s cubic-bezier(0.34,1.56,0.64,1), filter 0.25s ease",
               }}
             >
               <Image src="/buttons/redo.svg" alt="Redo" width={80} height={45} />
@@ -470,18 +337,21 @@ export default function PhotoboothPage() {
               type="button"
               onClick={() => router.push("/final-image")}
               disabled={isSaving}
+              onMouseDown={() => setPressedBtn("next")}
+              onMouseUp={() => setPressedBtn(null)}
+              onMouseLeave={() => setPressedBtn(null)}
+              onTouchStart={() => setPressedBtn("next")}
+              onTouchEnd={() => setPressedBtn(null)}
               style={{
                 background: "none", border: "none", padding: 0,
                 cursor: isSaving ? "not-allowed" : "pointer",
                 opacity: isSaving ? 0.4 : 1,
-                transition: "opacity 0.2s ease, transform 0.15s ease",
-              }}
-              onMouseEnter={(e) => {
-                if (!isSaving)
-                  (e.currentTarget as HTMLButtonElement).style.transform = "scale(1.05)";
-              }}
-              onMouseLeave={(e) => {
-                (e.currentTarget as HTMLButtonElement).style.transform = "scale(1)";
+                display: "inline-block",
+                transform: pressedBtn === "next" ? "scale(0.88)" : "scale(1)",
+                filter: pressedBtn === "next" ? "brightness(0.8)" : "brightness(1)",
+                transition: pressedBtn === "next"
+                  ? "transform 0.08s ease, filter 0.08s ease"
+                  : "transform 0.25s cubic-bezier(0.34,1.56,0.64,1), filter 0.25s ease",
               }}
             >
               <Image src="/buttons/next-button.svg" alt="Next" width={59} height={47} />
@@ -490,12 +360,9 @@ export default function PhotoboothPage() {
         )}
       </div>
 
-      {/* Error */}
-      {error && (
+      {/* Error — message is console-only; retry button still shown if no camera */}
+      {error && !hasCamera && (
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "8px" }}>
-          <p style={{ color: "rgba(255,180,180,0.9)", fontSize: "12px", fontFamily: "monospace", textAlign: "center", maxWidth: "400px" }}>
-            {error}
-          </p>
           {!hasCamera && (
             <button
               type="button"
@@ -517,6 +384,7 @@ export default function PhotoboothPage() {
 
       {/* Hidden capture canvas */}
       <canvas ref={captureRef} style={{ display: "none" }} />
+      </div>
     </main>
   );
 }

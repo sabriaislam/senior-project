@@ -65,6 +65,8 @@ export default function ThankYouPage() {
             onMouseDown={() => setPressed(true)}
             onMouseUp={() => setPressed(false)}
             onMouseLeave={() => setPressed(false)}
+            onTouchStart={() => setPressed(true)}
+            onTouchEnd={() => setPressed(false)}
             style={{
               background: "none",
               border: "none",
@@ -73,7 +75,9 @@ export default function ThankYouPage() {
               display: "inline-block",
               transform: pressed ? "scale(0.88)" : "scale(1)",
               filter: pressed ? "brightness(0.8)" : "brightness(1)",
-              transition: "transform 0.25s cubic-bezier(0.34,1.56,0.64,1), filter 0.25s ease",
+              transition: pressed
+                ? "transform 0.08s ease, filter 0.08s ease"
+                : "transform 0.25s cubic-bezier(0.34,1.56,0.64,1), filter 0.25s ease",
             }}
           >
             <Image 

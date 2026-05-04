@@ -5,12 +5,14 @@ import { FilmGrain } from "./film-grain";
 interface PageShellProps {
   /** Path to the looping background video in /public */
   videoSrc: string;
-  /** CSS brightness filter on the video (default 0.45) */
+  /** CSS brightness filter on the video (default 1) */
   brightness?: number;
+  /** Show film grain overlay (default true) */
+  grain?: boolean;
   children: React.ReactNode;
 }
 
-export function PageShell({ videoSrc, brightness = 0.45, children }: PageShellProps) {
+export function PageShell({ videoSrc, brightness = 1, grain = true, children }: PageShellProps) {
   return (
     <main className="relative w-screen h-screen overflow-hidden bg-black">
       <video
@@ -20,9 +22,9 @@ export function PageShell({ videoSrc, brightness = 0.45, children }: PageShellPr
         muted
         playsInline
         className="absolute inset-0 w-full h-full object-cover"
-        style={{ filter: `brightness(${brightness})`, zIndex: 2 }}
+        style={{ filter: `brightness(${brightness})`, zIndex: 2, transform: "scale(1.3) translateX(10%)" }}
       />
-      <FilmGrain />
+      {grain && <FilmGrain />}
       {children}
     </main>
   );

@@ -19,6 +19,7 @@ export default function FinalImagePage() {
   const [isLoading, setIsLoading] = useState(true);
   const [selected, setSelected] = useState<1 | 2 | 3>(1);
   const [cardImageUrls, setCardImageUrls] = useState<Record<1 | 2 | 3, string | null>>({ 1: null, 2: null, 3: null });
+  const [pressedBtn, setPressedBtn] = useState<string | null>(null);
 
   const cardImageUrl = cardImageUrls[selected];
 
@@ -72,23 +73,38 @@ export default function FinalImagePage() {
   ];
 
   return (
-    <main className="relative min-h-screen w-full overflow-hidden" style={{ background: "black" }}>
+    <main className="relative min-h-screen w-full overflow-hidden" style={{ background: "#C19574" }}>
       {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src="/bg/design2.png"
+        alt=""
+        aria-hidden
+        style={{
+          position: "absolute",
+          inset: 0,
+          width: "100%",
+          height: "100%",
+          objectFit: "cover",
+          transform: "rotate(180deg) scale(1)",
+          pointerEvents: "none",
+          opacity: "10%",
+          zIndex: 1,
+        }}
+      />
       <img
         src="/design2.png"
         alt=""
         style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", filter: "brightness(0.3)", zIndex: 1 }}
       />
-      <FilmGrain />
       <div
         className="absolute inset-0 flex flex-col justify-center"
         style={{ zIndex: 20, padding: "0 20vw" }}
       >
         {/* Headings — mirrors /answer structure */}
         <div className="flex flex-col gap-1 mb-10">
-          <span className="text-5xl"><span className="font-pixel">C</span><span className="font-gayatri" style={{ fontStyle: "italic" }}>hoose your layout</span></span>
+          <span className="text-5xl"><span className="font-pixel">T</span><span className="font-gayatri" style={{ fontStyle: "italic" }}>hank you for sharing your story</span></span>
           <p className="font-karla leading-tight text-lg" style={{ color: "#ede4e6" }}>
-            Pick the format for your postcard
+            Choose your layout for your postcard
           </p>
         </div>
 
@@ -100,8 +116,10 @@ export default function FinalImagePage() {
               onClick={() => setSelected(id)}
               className="group relative flex flex-col gap-2 transition overflow-hidden w-full"
               style={{
-                backgroundColor: selected === id ? "rgba(98,152,219,0.85)" : "rgba(98,152,219,0.35)",
-                border: selected === id ? "1px solid rgba(98,152,219,1)" : "1px solid rgba(98,152,219,0.4)",
+                backgroundColor: selected === id ? "rgba(240,240,240,0.22)" : "rgba(255,255,255,0.03)",
+                border: selected === id ? "2px solid rgba(255,255,255,0.75)" : "2px solid rgba(255,255,255,0.1)",
+                boxShadow: selected === id ? "0 0 0 1px rgba(255,255,255,0.2), inset 0 0 12px rgba(255,255,255,0.06)" : "none",
+                opacity: selected === id ? 1 : 0.55,
                 padding: "0.75rem 0.75rem 0.6rem",
               }}
             >
@@ -120,12 +138,44 @@ export default function FinalImagePage() {
             type="button"
             onClick={() => { if (cardImageUrl) printImage(cardImageUrl); }}
             disabled={!cardImageUrl}
+            onMouseDown={() => setPressedBtn("print")}
+            onMouseUp={() => setPressedBtn(null)}
+            onMouseLeave={() => setPressedBtn(null)}
+            onTouchStart={() => setPressedBtn("print")}
+            onTouchEnd={() => setPressedBtn(null)}
             className="mr-auto disabled:opacity-40"
+            style={{
+              background: "none",
+              border: "none",
+              padding: 0,
+              cursor: !cardImageUrl ? "not-allowed" : "pointer",
+              display: "inline-block",
+              transform: pressedBtn === "print" ? "scale(0.88)" : "scale(1)",
+              filter: pressedBtn === "print" ? "brightness(0.8)" : "brightness(1)",
+              transition: pressedBtn === "print"
+                ? "transform 0.08s ease, filter 0.08s ease"
+                : "transform 0.25s cubic-bezier(0.34,1.56,0.64,1), filter 0.25s ease",
+            }}
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/buttons/print-button.svg" alt="Print" className="h-10" />
           </button>
-          <a href={`/share?layout=${selected}`}>
+          <a
+            href={`/share?layout=${selected}`}
+            onMouseDown={() => setPressedBtn("next")}
+            onMouseUp={() => setPressedBtn(null)}
+            onMouseLeave={() => setPressedBtn(null)}
+            onTouchStart={() => setPressedBtn("next")}
+            onTouchEnd={() => setPressedBtn(null)}
+            style={{
+              display: "inline-block",
+              transform: pressedBtn === "next" ? "scale(0.88)" : "scale(1)",
+              filter: pressedBtn === "next" ? "brightness(0.8)" : "brightness(1)",
+              transition: pressedBtn === "next"
+                ? "transform 0.08s ease, filter 0.08s ease"
+                : "transform 0.25s cubic-bezier(0.34,1.56,0.64,1), filter 0.25s ease",
+            }}
+          >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/buttons/next-button.svg" alt="Next" className="h-10" />
           </a>

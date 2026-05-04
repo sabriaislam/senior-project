@@ -18,6 +18,7 @@ export default function NamePage() {
   const [loaded, setLoaded] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [pressed, setPressed] = useState(false);
 
   useEffect(() => {
     try {
@@ -59,65 +60,94 @@ export default function NamePage() {
   }
 
   return (
-    <PageShell videoSrc="/name.mov">
+    <PageShell videoSrc="/bg/how-will-u-be-rmm.mp4" brightness={0.9}>
       <div
         className="absolute inset-0"
         style={{ zIndex: 20 }}
       >
-        {/* Floating blue card */}
+        {/* Card using name-box.svg as background */}
         <div
           style={{
             position: "absolute",
-            left: "7.3%",
-            bottom: "7.2%",
-            width: "71.6%",
-            backgroundColor: "#6298DB",
-            padding: "2.5rem 2.5rem 3rem 4rem",
+            left: "5%",
+            top: "7%",
+            width: "50%",
           }}
         >
-          <h1
-            className="text-white mb-6"
-            style={{ fontSize: "2.4rem", lineHeight: 1.2 }}
+          {/* SVG background (brown rect + gold stars) */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/buttons/name-box.svg" style={{ width: "100%", display: "block" }} alt="" />
+
+          {/* Content overlay positioned over the brown rectangle portion of the SVG */}
+          {/* Brown rect in SVG: x=69–541 (left 11.6%, right 9.4%), y=36–296 (top 10.1%, bottom 17.1%) */}
+          <div
+            style={{
+              position: "absolute",
+              left: "11.6%",
+              top: "10.1%",
+              right: "9.4%",
+              bottom: "17.1%",
+              padding: "1.4rem 1.8rem 1.4rem 2.2rem",
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "center",
+            }}
           >
-            <span className="font-pixel">W</span>
-            <span className="font-gayatri" style={{ fontStyle: "italic" }}>hat name do you want to be remembered by?</span>
-          </h1>
+            <h1
+              className="text-white mb-5"
+              style={{ fontSize: "3rem", lineHeight: 1.2 }}
+            >
+              <span className="font-pixel">H</span>
+              <span className="font-gayatri" style={{ fontStyle: "italic" }}>ow do you want to be remembered?</span>
+            </h1>
 
-          <form onSubmit={handleSubmit}>
-            <div className="flex items-center gap-3">
-              <input
-                type="text"
-                value={draft.name}
-                onChange={(e) =>
-                  setDraft((prev: InstallationDraft) => ({ ...prev, name: e.target.value }))
-                }
-                className="font-roboto-mono px-2 py-2 text-base text-black outline-none"
-                style={{
-                  width: "280px",
-                  backgroundColor: "rgba(217, 217, 217, 0.7)",
-                  boxShadow: "inset 0 2px 8px rgba(0,0,0,0.2)",
-                }}
-              />
-              <button
-                type="submit"
-                disabled={isSaving}
-                style={{
-                  opacity: draft.name.trim() ? 1 : 0,
-                  pointerEvents: draft.name.trim() ? "auto" : "none",
-                  transition: "opacity 0.4s ease, transform 0.2s ease",
-                  background: "none",
-                  border: "none",
-                  padding: 0,
-                  cursor: "pointer",
-                }}
-                className="hover:scale-105 disabled:opacity-40"
-              >
-                <Image src="/buttons/next-button.svg" alt="Next" width={59} height={47} />
-              </button>
-            </div>
-          </form>
+            <form onSubmit={handleSubmit}>
+              <div className="flex items-center gap-3">
+                <input
+                  type="text"
+                  value={draft.name}
+                  onChange={(e) =>
+                    setDraft((prev: InstallationDraft) => ({ ...prev, name: e.target.value }))
+                  }
+                  placeholder="Enter your name"
+                  className="font-roboto-mono px-2 py-2 text-base text-black outline-none"
+                  style={{
+                    width: "280px",
+                    backgroundColor: "rgba(210, 188, 162, 0.9)",
+                    boxShadow: "inset 0 2px 8px rgba(0,0,0,0.2)",
+                  }}
+                />
+                <button
+                  type="submit"
+                  disabled={isSaving}
+                  onMouseDown={() => setPressed(true)}
+                  onMouseUp={() => setPressed(false)}
+                  onMouseLeave={() => setPressed(false)}
+                  onTouchStart={() => setPressed(true)}
+                  onTouchEnd={() => setPressed(false)}
+                  style={{
+                    opacity: draft.name.trim() ? 1 : 0,
+                    pointerEvents: draft.name.trim() ? "auto" : "none",
+                    background: "none",
+                    border: "none",
+                    padding: 0,
+                    cursor: "pointer",
+                    display: "inline-block",
+                    flexShrink: 0,
+                    transform: pressed ? "scale(0.88)" : "scale(1)",
+                    filter: pressed ? "brightness(0.8)" : "brightness(1)",
+                    transition: pressed
+                      ? "transform 0.08s ease, filter 0.08s ease"
+                      : "transform 0.25s cubic-bezier(0.34,1.56,0.64,1), filter 0.25s ease",
+                  }}
+                >
+                  <Image src="/buttons/next-button.svg" alt="Next" width={59} height={47} />
+                </button>
+              </div>
+            </form>
 
-          {error ? <p className="text-sm text-red-300 mt-2">{error}</p> : null}
+            {error ? <p className="text-sm text-red-300 mt-2">{error}</p> : null}
+          </div>
         </div>
       </div>
     </PageShell>

@@ -24,6 +24,7 @@ export default function AnswerPage() {
   const [isBooting, setIsBooting] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [pressed, setPressed] = useState(false);
 
   const wordsUsed = useMemo(() => countWords(answer), [answer]);
   const isOverLimit = wordsUsed > MAX_WORDS;
@@ -74,8 +75,26 @@ export default function AnswerPage() {
   return (
     <main
       className="w-screen h-screen overflow-hidden flex items-center justify-center"
-      style={{ backgroundColor: "#636363" }}
+      style={{ backgroundColor: "#6298DB" }}
     >
+      {/* design1 overlay with screen blend */}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src="/bg/design1.png"
+        alt=""
+        aria-hidden
+        style={{
+          position: "absolute",
+          inset: 0,
+          width: "100%",
+          height: "100%",
+          objectFit: "cover",
+          transform: "rotate(180deg) scale(1)",
+          mixBlendMode: "screen",
+          pointerEvents: "none",
+          zIndex: 1,
+        }}
+      />
       {/* Pink card */}
       <div
         className="relative overflow-hidden"
@@ -83,6 +102,7 @@ export default function AnswerPage() {
           width: "61vw",
           height: "60vh",
           backgroundColor: "#DB62A0",
+          zIndex: 2,
         }}
       >
         {/* Grain overlay */}
@@ -123,7 +143,7 @@ export default function AnswerPage() {
                 className="font-gayatri"
                 style={{ fontStyle: "italic" }}
               >
-                he story of {subject}
+                {`he story of ${subject}`}
               </span>
             </h1>
           )}
@@ -195,20 +215,23 @@ export default function AnswerPage() {
               type="button"
               onClick={() => void handleNext()}
               disabled={isSaving || isOverLimit}
+              onMouseDown={() => setPressed(true)}
+              onMouseUp={() => setPressed(false)}
+              onMouseLeave={() => setPressed(false)}
+              onTouchStart={() => setPressed(true)}
+              onTouchEnd={() => setPressed(false)}
               style={{
                 background: "none",
                 border: "none",
                 padding: 0,
                 cursor: isSaving || isOverLimit ? "not-allowed" : "pointer",
                 opacity: isSaving || isOverLimit ? 0.4 : 1,
-                transition: "opacity 0.2s ease, transform 0.15s ease",
-              }}
-              onMouseEnter={(e) => {
-                if (!isSaving && !isOverLimit)
-                  (e.currentTarget as HTMLButtonElement).style.transform = "scale(1.05)";
-              }}
-              onMouseLeave={(e) => {
-                (e.currentTarget as HTMLButtonElement).style.transform = "scale(1)";
+                display: "inline-block",
+                transform: pressed ? "scale(0.88)" : "scale(1)",
+                filter: pressed ? "brightness(0.8)" : "brightness(1)",
+                transition: pressed
+                  ? "transform 0.08s ease, filter 0.08s ease"
+                  : "transform 0.25s cubic-bezier(0.34,1.56,0.64,1), filter 0.25s ease",
               }}
             >
               <Image

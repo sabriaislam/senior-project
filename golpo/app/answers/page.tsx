@@ -4,72 +4,229 @@ import Image from "next/image";
 import { useEffect, useState } from "react";
 import { getAllResponses, type ResponseEntry } from "@/lib/firebase/user-db";
 
+const STORY_PROMPTS = [
+  {
+    category: "THE STORY OF CHANGE",
+    question: "When did you first feel like the person you always suspected you could be?",
+  },
+  {
+    category: "THE STORY OF FRIENDSHIP",
+    question: "Tell me about a friend who makes you feel like home",
+  },
+  {
+    category: "THE STORY OF A PLACE",
+    question:
+      "Tell me about a place you carry with you, one you could close your eyes and still be inside.",
+  },
+  {
+    category: "THE STORY OF AN OBJECT",
+    question: "What's an object that carries a story only you understand?",
+  },
+  {
+    category: "THE STORY OF LANGUAGE",
+    question:
+      "Tell me a phrase from your native language that doesn't quite translate in English. who taught it to you and when did you learn it?",
+  },
+];
+
 export default function AnswersPage() {
   const [responses, setResponses] = useState<ResponseEntry[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [openQuestion, setOpenQuestion] = useState<string | null>(null);
+  const [activeIdx, setActiveIdx] = useState(0);
+  const [hoveredIdx, setHoveredIdx] = useState<number | null>(null);
 
   useEffect(() => {
     getAllResponses()
-      .then((data) => {
-        setResponses(data);
-        if (data.length > 0) setOpenQuestion(data[0]?.chosenQuestion ?? null);
-      })
+      .then(setResponses)
       .catch(console.error)
       .finally(() => setIsLoading(false));
   }, []);
 
-  const grouped = responses.reduce<Record<string, ResponseEntry[]>>((acc, r) => {
-    (acc[r.chosenQuestion] ??= []).push(r);
-    return acc;
-  }, {});
-
-  const questions = Object.keys(grouped).sort((a, b) => a.localeCompare(b));
+  const displayIdx = hoveredIdx ?? activeIdx;
 
   return (
-    <main className="mx-auto flex min-h-screen w-full max-w-5xl flex-col gap-8 px-6 py-12">
+    <main
+      style={{
+        backgroundColor: "#6298DB",
+        minHeight: "100vh",
+        display: "flex",
+        flexDirection: "column",
+      }}
+    >
       {/* Logo */}
-      <div className="flex justify-center">
-        <Image src="/GOLPO-BLACK.svg" alt="Golpo" width={120} height={50} style={{ objectFit: "contain" }} />
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          paddingTop: "2rem",
+          paddingBottom: "1.5rem",
+        }}
+      >
+        <Image
+          src="/GOLPO-WHITE.svg"
+          alt="GOLPO"
+          width={200}
+          height={340}
+          priority
+          style={{ filter: "drop-shadow(0px 6px 40px rgba(0,0,0,0.8))" }}
+        />
       </div>
 
-      {isLoading && <p className="text-center text-sm opacity-60">Loading responses...</p>}
-      {!isLoading && questions.length === 0 && (
-        <p className="text-center text-sm opacity-60">No responses yet.</p>
-      )}
+      {/* Nav + cards: one flex row where each column owns its button + cards below */}
+      <div
+        style={{
+          display: "flex",
+          gap: "10px",
+          padding: "0 2rem 2rem",
+          flex: 1,
+          alignItems: "flex-start",
+        }}
+        onMouseLeave={() => setHoveredIdx(null)}
+      >
+        {STORY_PROMPTS.map((prompt, idx) => {
+          const isExpanded = idx === displayIdx;
+          const columnResponses = responses.filter(
+            (r) => r.chosenQuestion === prompt.question
+          );
 
-      {/* Accordion list */}
-      <div className="flex flex-col gap-2">
-        {questions.map((question) => {
-          const isOpen = openQuestion === question;
-          const entries = grouped[question] ?? [];
           return (
-            <div key={question} className="rounded-2xl overflow-hidden bg-black/10">
-              {/* Question header / toggle */}
+            <div
+              key={prompt.category}
+              style={{
+                flex: isExpanded ? "4 1 0" : "1 1 0",
+                transition: "flex 0.35s cubic-bezier(0.34,1.2,0.64,1)",
+                display: "flex",
+                flexDirection: "column",
+                gap: "1rem",
+                minWidth: 0,
+              }}
+            >
+              {/* Tab button */}
               <button
                 type="button"
-                onClick={() => setOpenQuestion(isOpen ? null : question)}
-                className="w-full flex items-center justify-between gap-4 px-5 py-4 text-left transition hover:bg-black/10"
+                onClick={() => setActiveIdx(idx)}
+                onMouseEnter={() => setHoveredIdx(idx)}
+                style={{
+                  height: "51px",
+                  width: "100%",
+                  borderRadius: "18px",
+                  background: "#F6F6F6",
+                  border: "none",
+                  cursor: "pointer",
+                  padding: "0 1rem",
+                  overflow: "hidden",
+                  whiteSpace: "nowrap",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontFamily: "var(--font-roboto-mono), monospace",
+                  fontSize: "clamp(0.5rem, 0.8vw, 0.78rem)",
+                  fontWeight: 700,
+                  color: "#1a1a1a",
+                  letterSpacing: "0.02em",
+                  flexShrink: 0,
+                }}
               >
-                <span className="font-average text-lg leading-snug">{question}</span>
-                <span className="shrink-0 text-sm opacity-50">{entries.length} {entries.length === 1 ? "response" : "responses"}</span>
-                <svg
-                  className={`shrink-0 w-4 h-4 opacity-50 transition-transform ${isOpen ? "rotate-180" : ""}`}
-                  viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2"
+                <span
+                  style={{
+                    opacity: isExpanded ? 1 : 0.45,
+                    transition: "opacity 0.25s ease",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    pointerEvents: "none",
+                  }}
                 >
-                  <path d="M3 6l5 5 5-5" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
+                  {prompt.category.toLowerCase()}
+                </span>
               </button>
 
-              {/* Responses grid */}
-              {isOpen && (
-                <div className="grid grid-cols-3 gap-3 px-5 pb-5">
-                  {entries.map((r) => (
-                    <div key={r.id} className="rounded-xl bg-white/20 px-4 py-3 space-y-1">
-                      <p className="text-xs font-semibold opacity-60 uppercase tracking-wide">{r.name}</p>
-                      <p className="text-sm leading-relaxed">{r.answerText}</p>
-                    </div>
-                  ))}
+              {/* Cards — only rendered for the expanded column */}
+              {isExpanded && (
+                <div
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "1rem",
+                    overflow: "hidden",
+                  }}
+                >
+                  {isLoading ? (
+                    <p
+                      style={{
+                        color: "white",
+                        opacity: 0.6,
+                        fontSize: "0.875rem",
+                        textAlign: "center",
+                        marginTop: "1rem",
+                      }}
+                    >
+                      Loading responses…
+                    </p>
+                  ) : columnResponses.length === 0 ? (
+                    <p
+                      style={{
+                        color: "white",
+                        opacity: 0.6,
+                        fontSize: "0.875rem",
+                        textAlign: "center",
+                        marginTop: "1rem",
+                      }}
+                    >
+                      No responses yet for this story.
+                    </p>
+                  ) : (
+                    columnResponses.map((r) => (
+                      <div
+                        key={r.id}
+                        style={{
+                          background: "rgba(217,217,217,0.22)",
+                          borderRadius: "20px",
+                          padding: "1.5rem 1.75rem",
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: "0.85rem",
+                        }}
+                      >
+                        <h3
+                          className="font-average"
+                          style={{
+                            fontSize: "1rem",
+                            fontWeight: 600,
+                            color: "white",
+                            margin: 0,
+                            lineHeight: 1.4,
+                          }}
+                        >
+                          {prompt.question}
+                        </h3>
+
+                        <p
+                          style={{
+                            fontSize: "0.9rem",
+                            color: "white",
+                            opacity: 0.88,
+                            margin: 0,
+                            lineHeight: 1.65,
+                          }}
+                        >
+                          {r.answerText}
+                        </p>
+
+                        <p
+                          style={{
+                            fontSize: "0.78rem",
+                            color: "white",
+                            opacity: 0.65,
+                            fontStyle: "italic",
+                            margin: 0,
+                            textAlign: "right",
+                          }}
+                        >
+                          — {r.name}
+                        </p>
+                      </div>
+                    ))
+                  )}
                 </div>
               )}
             </div>

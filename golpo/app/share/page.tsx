@@ -28,6 +28,7 @@ function SharePageInner() {
   const [email, setEmail] = useState("");
   const [isSending, setIsSending] = useState(false);
   const [sendError, setSendError] = useState<string | null>(null);
+  const [pressedBtn, setPressedBtn] = useState<string | null>(null);
 
   useEffect(() => {
     let mounted = true;
@@ -93,17 +94,26 @@ function SharePageInner() {
   }
 
   return (
-    <main className="relative grid min-h-screen w-full grid-cols-2 overflow-hidden" style={{ background: "black" }}>
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src="/design3.png"
-        alt=""
-        style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", filter: "brightness(0.3)", zIndex: 1 }}
-      />
-      <FilmGrain />
+    <main className="relative grid min-h-screen w-full grid-cols-2 overflow-hidden" style={{ background: "#DB62A0" }}>
       {/* Left — postcard preview */}
       <div className="relative flex items-center justify-center p-10 border-r border-white/10" style={{ zIndex: 20 }}>
-        <div className="w-full max-w-lg">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/bg/design4.jpg"
+          alt=""
+          aria-hidden
+          style={{
+            position: "absolute",
+            inset: 0,
+            width: "100%",
+            height: "100%",
+            objectFit: "cover",
+            opacity: 0.2,
+            pointerEvents: "none",
+            zIndex: 1,
+          }}
+        />
+        <div className="w-full max-w-lg" style={{ position: "relative", zIndex: 1 }}>
           {layout === 1 ? (
             <FinalImageOption1 data={data} onImageReady={setCardImageUrl} />
           ) : (
@@ -117,19 +127,23 @@ function SharePageInner() {
         <FilmGrain/>
         {/* Top: heading + email form */}
         <div className="w-full max-w-lg flex flex-col justify-start gap-4">
-          <Link href="/final-image">
-            <button
-              type="button"
-              style={{
-                border: "none",
-                padding: 0,
-                cursor: "pointer",
-                transition: "opacity 0.4s ease, transform 0.2s ease",
-              }}
-              className="hover:scale-105"
-            >
-              <Image src="/buttons/back-button.svg" alt="Back" width={100} height={47} />
-            </button>
+          <Link
+            href="/final-image"
+            onMouseDown={() => setPressedBtn("back")}
+            onMouseUp={() => setPressedBtn(null)}
+            onMouseLeave={() => setPressedBtn(null)}
+            onTouchStart={() => setPressedBtn("back")}
+            onTouchEnd={() => setPressedBtn(null)}
+            style={{
+              display: "inline-block",
+              transform: pressedBtn === "back" ? "scale(0.88)" : "scale(1)",
+              filter: pressedBtn === "back" ? "brightness(0.8)" : "brightness(1)",
+              transition: pressedBtn === "back"
+                ? "transform 0.08s ease, filter 0.08s ease"
+                : "transform 0.25s cubic-bezier(0.34,1.56,0.64,1), filter 0.25s ease",
+            }}
+          >
+            <Image src="/buttons/back-button.svg" alt="Back" width={100} height={47} />
           </Link>
 
           <div className="flex flex-col gap-1">
@@ -156,6 +170,23 @@ function SharePageInner() {
                 type="submit"
                 disabled={isSending || !cardImageUrl}
                 aria-label="Send"
+                onMouseDown={() => setPressedBtn("send")}
+                onMouseUp={() => setPressedBtn(null)}
+                onMouseLeave={() => setPressedBtn(null)}
+                onTouchStart={() => setPressedBtn("send")}
+                onTouchEnd={() => setPressedBtn(null)}
+                style={{
+                  background: "none",
+                  border: "none",
+                  padding: 0,
+                  cursor: isSending || !cardImageUrl ? "not-allowed" : "pointer",
+                  display: "inline-block",
+                  transform: pressedBtn === "send" ? "scale(0.88)" : "scale(1)",
+                  filter: pressedBtn === "send" ? "brightness(0.8)" : "brightness(1)",
+                  transition: pressedBtn === "send"
+                    ? "transform 0.08s ease, filter 0.08s ease"
+                    : "transform 0.25s cubic-bezier(0.34,1.56,0.64,1), filter 0.25s ease",
+                }}
               >
                 {isSending ? (
                   <span className="text-xs">…</span>

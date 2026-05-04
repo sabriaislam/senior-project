@@ -62,9 +62,6 @@ export default function StoryPage() {
     };
   }, []);
 
-  const heading = `this is ${entry?.name ?? ""}${entry?.name ? "’s" : ""} story`;
-  const firstChar = "t";
-  const rest = heading.slice(1);
 
   return (
     <main className="relative w-screen h-screen overflow-hidden flex">
@@ -75,13 +72,13 @@ export default function StoryPage() {
         style={{ zIndex: 30, imageRendering: "pixelated", width: "100%", height: "100%" }}
       />
 
-      {/* Left panel — solid green */}
+      {/* Left panel — solid off-white grey */}
       <div
         className="relative flex flex-col justify-end"
         style={{
           width: "50%",
-          backgroundColor: "#93D892",
-          paddingLeft: "8%",
+          backgroundColor: "#EDEDED",
+          paddingLeft: "6%",
           paddingRight: "6%",
           paddingBottom: "10%",
           zIndex: 10,
@@ -89,21 +86,17 @@ export default function StoryPage() {
           transition: "opacity 0.4s ease",
         }}
       >
-        <h1 className="text-left leading-tight mb-6" style={{ fontSize: "3rem", color:"#003330"}}>
-          <span className="font-pixel" style={{ fontSize: "3rem" }}>{firstChar.toUpperCase()}</span>
-          <span className="font-gayatri" style={{ fontStyle: "italic" }}>{rest}</span>
+        <h1 className="text-left leading-tight mb-2" style={{ fontSize: "3rem", color:"#000000"}}>
+          <span className="font-pixel" style={{ fontSize: "3rem" }}>T</span>
+          <span className="font-gayatri" style={{ fontStyle: "italic" }}>his is </span>
+          <span className="font-gayatri" style={{ fontStyle: "italic", color: "#255085 " }}>{entry?.name ?? ""}</span>
+          <span className="font-gayatri" style={{ fontStyle: "italic" }}>{`${entry?.name ? "'s" : ""} story`}</span>
         </h1>
-
-        {entry?.storyCategory ? (
-          <p className="font-gayatri text-sm mb-2" style={{ color: "#1a3a1a", opacity: 0.75, fontSize: "1rem"}}>
-            {entry.storyCategory}
-          </p>
-        ) : null}
 
         {entry?.chosenQuestion ? (
           <p
             className="font-roboto-mono font-bold leading-relaxed mb-4"
-            style={{ fontSize: "0.95rem", color: "#1a3a1a", maxWidth: "90%" }}
+            style={{ fontSize: "0.95rem", color: "#000000", maxWidth: "100%" }}
           >
             {entry.chosenQuestion}
           </p>
@@ -112,7 +105,7 @@ export default function StoryPage() {
         {entry?.answerText ? (
           <p
             className="font-roboto-mono leading-relaxed mb-4"
-            style={{ fontSize: "0.85rem", color: "#1a1a1a", maxWidth: "90%" }}
+            style={{ fontSize: "0.85rem", color: "#1a1a1a", maxWidth: "100%" }}
           >
             {entry.answerText}
           </p>
@@ -120,13 +113,19 @@ export default function StoryPage() {
 
       </div>
 
-      {/* Right panel — gray placeholder for video */}
-      <div className="relative flex-1" style={{ backgroundColor: "#9E9E9E" }}>
+      {/* Right panel */}
+      <div className="relative flex-1" style={{ backgroundColor: "#0e3d77" }}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/bg/world-spin-clear.gif"
+          alt=""
+          style={{ position: "absolute", top: -45, left: 120, width: "70%", height: "auto", display: "block" }}
+        />
         {/* Nav button */}
         <div
-          className="absolute transition-opacity duration-1000"
+          className="absolute transition-opacity duration-3000"
           style={{
-            bottom: "10%",
+            bottom: "5%",
             right: "8%",
             opacity: showNav ? 1 : 0,
             pointerEvents: showNav ? "auto" : "none",
@@ -152,7 +151,7 @@ export default function StoryPage() {
             <Image
               src="/buttons/whats-yours.svg"
               alt="What's yours?"
-              width={170}
+              width={200}
               height={64}
             />
           </Link>
