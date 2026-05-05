@@ -53,7 +53,7 @@ export default function QuestionsPage() {
         storyCategory: prompt.category,
         chosenQuestion: prompt.question,
       });
-      router.push("/answer");
+      router.push("/user-answer");
     } catch (err) {
       console.error("Failed to save story prompt:", err);
       setError("Could not save your selection. Please try again.");

@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { getUserDb, updateUserDb } from "@/lib/firebase/user-db";
 
-const MAX_WORDS = 150;
+const MAX_WORDS = 100;
 
 function countWords(value: string) {
   return value.trim().split(/\s+/).filter(Boolean).length;

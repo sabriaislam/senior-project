@@ -2,237 +2,333 @@
 
 import Image from "next/image";
 import { useEffect, useState } from "react";
-import { getAllResponses, type ResponseEntry } from "@/lib/firebase/user-db";
+import { getAllResponses, ResponseEntry } from "@/lib/firebase/user-db";
+
+const GOLPO_IMAGES = [
+  "1592446274572_Original.jpg",
+  "Photoroom_20260427_155621.PNG",
+  "Photoroom_20260427_155638.PNG",
+  "Photoroom_20260427_155648.PNG",
+  "Photoroom_20260427_155655.PNG",
+  "Photoroom_20260427_194306.PNG",
+  "Photoroom_20260503_163631.PNG",
+  "Photoroom_20260503_163712.PNG",
+  "Photoroom_20260503_163720.PNG",
+  "Photoroom_20260503_163727.PNG",
+  "Photoroom_20260503_163733.PNG",
+  "Photoroom_20260503_163740.PNG",
+  "Photoroom_20260503_163749.PNG",
+  "Photoroom_20260503_163755.PNG",
+  "Photoroom_20260503_163803.PNG",
+  "Photoroom_20260503_163811.PNG",
+  "Photoroom_20260503_163819.PNG",
+  "Photoroom_20260503_163826.PNG",
+  "Photoroom_20260503_163833.PNG",
+  "Photoroom_20260503_163840.PNG",
+  "Photoroom_20260503_163847.PNG",
+];
+
+function seededRandom(seed: number) {
+  const x = Math.sin(seed + 1) * 10000;
+  return x - Math.floor(x);
+}
+
+// Stratified placement: 3 cols × 7 rows grid — one image per cell
+// Runs client-side only to avoid SSR/client hydration mismatch
+function buildImageLayout() {
+  const COLS = 3;
+  const ROWS = 7;
+  return GOLPO_IMAGES.map((src, i) => {
+    const col = i % COLS;
+    const row = Math.floor(i / COLS);
+    const cellW = 100 / COLS;
+    const cellH = 100 / ROWS;
+    // place image within its cell, leaving 10% margin on each side of the cell
+    const left = col * cellW + seededRandom(i * 5) * cellW * 0.8;
+    const top  = row * cellH + seededRandom(i * 5 + 1) * cellH * 0.8;
+    return {
+      src,
+      layer: (i % 3) + 1,
+      top,
+      left,
+      size: (120 + seededRandom(i * 5 + 2) * 140) * 1.7,
+    };
+  });
+}
+
+function useImageLayout() {
+  const [layout, setLayout] = useState<ReturnType<typeof buildImageLayout>>([]);
+  useEffect(() => { setLayout(buildImageLayout()); }, []);
+  return layout;
+}
+
+// parallax speed per layer — layer 1 moves slowest (furthest back)
+const PARALLAX_SPEED = [0.08, 0.18, 0.3];
 
 const STORY_PROMPTS = [
-  {
-    category: "THE STORY OF CHANGE",
-    question: "When did you first feel like the person you always suspected you could be?",
-  },
-  {
-    category: "THE STORY OF FRIENDSHIP",
-    question: "Tell me about a friend who makes you feel like home",
-  },
-  {
-    category: "THE STORY OF A PLACE",
-    question:
-      "Tell me about a place you carry with you, one you could close your eyes and still be inside.",
-  },
-  {
-    category: "THE STORY OF AN OBJECT",
-    question: "What's an object that carries a story only you understand?",
-  },
-  {
-    category: "THE STORY OF LANGUAGE",
-    question:
-      "Tell me a phrase from your native language that doesn't quite translate in English. who taught it to you and when did you learn it?",
-  },
+  { category: "THE STORY OF CHANGE", label: "story of change" },
+  { category: "THE STORY OF FRIENDSHIP", label: "story of friendship" },
+  { category: "THE STORY OF A PLACE", label: "story of a place" },
+  { category: "THE STORY OF AN OBJECT", label: "story of an object" },
+  { category: "THE STORY OF LANGUAGE", label: "story of language" },
 ];
 
 export default function AnswersPage() {
-  const [responses, setResponses] = useState<ResponseEntry[]>([]);
+  const [entries, setEntries] = useState<ResponseEntry[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [activeIdx, setActiveIdx] = useState(0);
-  const [hoveredIdx, setHoveredIdx] = useState<number | null>(null);
+  const [activeCategory, setActiveCategory] = useState<string | null>(null);
+  const [scrollY, setScrollY] = useState(0);
+  const imageLayout = useImageLayout();
 
   useEffect(() => {
     getAllResponses()
-      .then(setResponses)
+      .then(setEntries)
       .catch(console.error)
       .finally(() => setIsLoading(false));
   }, []);
 
-  const displayIdx = hoveredIdx ?? activeIdx;
+  useEffect(() => {
+    const onScroll = () => setScrollY(window.scrollY);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   return (
     <main
-      style={{
-        backgroundColor: "#6298DB",
-        minHeight: "100vh",
-        display: "flex",
-        flexDirection: "column",
-      }}
+      className="w-screen min-h-screen flex flex-col"
+      style={{ backgroundColor: "#6298DB", position: "relative" }}
     >
-      {/* Logo */}
+      {/* ── Parallax background images (fixed, shift at different rates on scroll) ── */}
+      <div style={{ position: "fixed", inset: 0, overflow: "hidden", pointerEvents: "none", zIndex: 0 }}>
+        {imageLayout.map((img, i) => (
+          <div
+            key={i}
+            style={{
+              position: "absolute",
+              top: `${img.top}%`,
+              left: `${img.left}%`,
+              zIndex: img.layer,
+              opacity: 0.4,
+              transform: `translateY(${scrollY * PARALLAX_SPEED[img.layer - 1]}px)`,
+              willChange: "transform",
+            }}
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={`/golpo-images/${img.src}`}
+              alt=""
+              style={{ width: img.size, height: img.size, objectFit: "cover", display: "block" }}
+            />
+          </div>
+        ))}
+      </div>
+
+      {/* ── Logo ── */}
       <div
         style={{
           display: "flex",
           justifyContent: "center",
-          paddingTop: "2rem",
-          paddingBottom: "1.5rem",
+          alignItems: "center",
+          paddingTop: "6vh",
+          paddingBottom: "3vh",
+          position: "relative",
+          zIndex: 10,
         }}
       >
         <Image
-          src="/GOLPO-WHITE.svg"
-          alt="GOLPO"
-          width={200}
-          height={340}
+          src="/bg/golpo-answers.svg"
+          alt="Golpo Answers"
+          width={450}
+          height={200}
+          style={{ width: "200px", height: "auto" }}
           priority
-          style={{ filter: "drop-shadow(0px 6px 40px rgba(0,0,0,0.8))" }}
         />
       </div>
 
-      {/* Nav + cards: one flex row where each column owns its button + cards below */}
-      <div
-        style={{
-          display: "flex",
-          gap: "10px",
-          padding: "0 2rem 2rem",
-          flex: 1,
-          alignItems: "flex-start",
-        }}
-        onMouseLeave={() => setHoveredIdx(null)}
-      >
-        {STORY_PROMPTS.map((prompt, idx) => {
-          const isExpanded = idx === displayIdx;
-          const columnResponses = responses.filter(
-            (r) => r.chosenQuestion === prompt.question
-          );
-
-          return (
-            <div
-              key={prompt.category}
-              style={{
-                flex: isExpanded ? "4 1 0" : "1 1 0",
-                transition: "flex 0.35s cubic-bezier(0.34,1.2,0.64,1)",
-                display: "flex",
-                flexDirection: "column",
-                gap: "1rem",
-                minWidth: 0,
-              }}
-            >
-              {/* Tab button */}
-              <button
-                type="button"
-                onClick={() => setActiveIdx(idx)}
-                onMouseEnter={() => setHoveredIdx(idx)}
+      {/* ── Buttons + Expanding Columns ── */}
+      <div style={{ padding: "0 5vw", flex: 1, position: "relative", zIndex: 10 }}>
+        <div
+          style={{
+            display: "flex",
+            gap: "12px",
+            alignItems: "flex-start",
+            minHeight: "60vh",
+          }}
+        >
+          {isLoading ? (
+            Array.from({ length: 5 }).map((_, i) => (
+              <div
+                key={i}
                 style={{
+                  flex: 1,
                   height: "51px",
-                  width: "100%",
-                  borderRadius: "18px",
-                  background: "#F6F6F6",
-                  border: "none",
-                  cursor: "pointer",
-                  padding: "0 1rem",
-                  overflow: "hidden",
-                  whiteSpace: "nowrap",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontFamily: "var(--font-roboto-mono), monospace",
-                  fontSize: "clamp(0.5rem, 0.8vw, 0.78rem)",
-                  fontWeight: 700,
-                  color: "#1a1a1a",
-                  letterSpacing: "0.02em",
-                  flexShrink: 0,
+                  backgroundColor: "#F6F6F6",
+                  opacity: 0.6,
                 }}
-              >
-                <span
-                  style={{
-                    opacity: isExpanded ? 1 : 0.45,
-                    transition: "opacity 0.25s ease",
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                    pointerEvents: "none",
-                  }}
-                >
-                  {prompt.category.toLowerCase()}
-                </span>
-              </button>
+              />
+            ))
+          ) : (
+            STORY_PROMPTS.map((prompt) => {
+              const isActive = activeCategory === prompt.category;
+              const isSomeActive = activeCategory !== null;
 
-              {/* Cards — only rendered for the expanded column */}
-              {isExpanded && (
+              const filtered = entries.filter(
+                (e) => e.storyCategory === prompt.category
+              );
+
+              return (
                 <div
+                  key={prompt.category}
                   style={{
+                    flex: isActive
+                      ? "2.5 1 0"
+                      : isSomeActive
+                      ? "0.8 1 0"
+                      : "1 1 0",
                     display: "flex",
                     flexDirection: "column",
-                    gap: "1rem",
-                    overflow: "hidden",
+                    transition:
+                      "flex 0.35s cubic-bezier(0.4,0,0.2,1)",
+                    minWidth: isSomeActive ? "120px" : "0px",
                   }}
                 >
-                  {isLoading ? (
-                    <p
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setActiveCategory(
+                        isActive ? null : prompt.category
+                      )
+                    }
+                    className="font-roboto-mono"
+                    style={{
+                      width: "100%",
+                      height: "51px",
+                      backgroundColor: isActive
+                        ? "#db62a0"
+                        : "#F6F6F6",
+                      boxShadow: "0 5px 4px rgba(0,0,0,0.25)",
+                      border: "none",
+                      cursor: "pointer",
+                      fontSize:
+                        "clamp(0.75rem, 0.9vw, 1rem)",
+                      fontWeight: 700,
+                      color: isActive ? "#fff" : "#000",
+                      whiteSpace: "nowrap",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                    }}
+                  >
+                    {prompt.label}
+                  </button>
+
+                  {/* Cards under active column */}
+                  <div
+                    style={{
+                      overflow: "hidden",
+                      maxHeight: isActive ? "none" : "0px",
+                      transition: "max-height 0.35s cubic-bezier(0.4,0,0.2,1)",
+                      display: "flex",
+                      flexDirection: "column",
+                    }}
+                  >
+                    <div
                       style={{
-                        color: "white",
-                        opacity: 0.6,
-                        fontSize: "0.875rem",
-                        textAlign: "center",
-                        marginTop: "1rem",
+                        display: "grid",
+                        gridTemplateColumns: "1fr",
+                        gap: "16px",
+                        marginTop: "16px",
+                        paddingRight: "6px",
+                        paddingBottom: "4vh",
                       }}
                     >
-                      Loading responses…
-                    </p>
-                  ) : columnResponses.length === 0 ? (
-                    <p
-                      style={{
-                        color: "white",
-                        opacity: 0.6,
-                        fontSize: "0.875rem",
-                        textAlign: "center",
-                        marginTop: "1rem",
-                      }}
-                    >
-                      No responses yet for this story.
-                    </p>
-                  ) : (
-                    columnResponses.map((r) => (
-                      <div
-                        key={r.id}
-                        style={{
-                          background: "rgba(217,217,217,0.22)",
-                          borderRadius: "20px",
-                          padding: "1.5rem 1.75rem",
-                          display: "flex",
-                          flexDirection: "column",
-                          gap: "0.85rem",
-                        }}
-                      >
-                        <h3
-                          className="font-average"
-                          style={{
-                            fontSize: "1rem",
-                            fontWeight: 600,
-                            color: "white",
-                            margin: 0,
-                            lineHeight: 1.4,
-                          }}
-                        >
-                          {prompt.question}
-                        </h3>
-
+                      {filtered.length > 0 ? (
+                        filtered.map((entry) => (
+                          <StoryCard
+                            key={entry.id}
+                            entry={entry}
+                          />
+                        ))
+                      ) : (
                         <p
+                          className="font-roboto-mono"
                           style={{
-                            fontSize: "0.9rem",
-                            color: "white",
-                            opacity: 0.88,
-                            margin: 0,
-                            lineHeight: 1.65,
+                            fontSize: "0.7rem",
+                            color: "#fff",
                           }}
                         >
-                          {r.answerText}
+                          No stories yet.
                         </p>
-
-                        <p
-                          style={{
-                            fontSize: "0.78rem",
-                            color: "white",
-                            opacity: 0.65,
-                            fontStyle: "italic",
-                            margin: 0,
-                            textAlign: "right",
-                          }}
-                        >
-                          — {r.name}
-                        </p>
-                      </div>
-                    ))
-                  )}
+                      )}
+                    </div>
+                  </div>
                 </div>
-              )}
-            </div>
-          );
-        })}
+              );
+            })
+          )}
+        </div>
       </div>
+
+      {/* ── Footer ── */}
+      <footer
+        className="font-roboto-mono"
+        style={{
+          position: "relative",
+          zIndex: 10,
+          textAlign: "center",
+          padding: "3vh 0 4vh",
+          fontSize: "0.7rem",
+          color: "#fff",
+          letterSpacing: "0.08em",
+        }}
+      >
+        a project by sabria islam
+      </footer>
     </main>
+  );
+}
+
+function StoryCard({ entry }: { entry: ResponseEntry }) {
+  return (
+    <div
+      style={{
+        backgroundColor: "#F6F6F6",
+        padding: "20px",
+        display: "flex",
+        flexDirection: "column",
+        gap: "10px",
+      }}
+    >
+      <p
+        className="font-roboto-mono"
+        style={{
+          fontSize: "0.7rem",
+          fontWeight: 700,
+          color: "#555",
+        }}
+      >
+        {entry.chosenQuestion}
+      </p>
+
+      <p
+        className="font-roboto-mono"
+        style={{
+          fontSize: "0.8rem",
+          color: "#111",
+          lineHeight: 1.5,
+        }}
+      >
+        {entry.answerText}
+      </p>
+
+      <p
+        className="font-roboto-mono"
+        style={{
+          fontSize: "0.65rem",
+          color: "#666",
+        }}
+      >
+        — {entry.name}
+      </p>
+    </div>
   );
 }

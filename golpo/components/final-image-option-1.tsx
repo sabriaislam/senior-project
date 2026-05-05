@@ -23,10 +23,10 @@ const TEXT_COLOR = "#6298DB";
 const SUBTEXT_COLOR = "#5B5B5B";
 
 // Top strip dimensions (matches SVG)
-const STRIP_Y = 100;
+const STRIP_Y = 50;
 const STRIP_H = 166;
-const STRIP_X = 70;
-const STRIP_W = 778;
+const STRIP_X = 40;
+const STRIP_W = 836;
 
 // Photos inside the strip
 const PHOTO_COUNT = 4;
@@ -43,14 +43,14 @@ const PHOTO_W = Math.floor(
 
 // Content area below strip
 const CONTENT_X = STRIP_X;
-const CONTENT_Y = STRIP_Y + STRIP_H + 28;
+const CONTENT_Y = STRIP_Y + STRIP_H + 40;
 const CONTENT_W = STRIP_W;
 
-const HEADING_SIZE = 35;
-const SUBHEADING_SIZE = 16.25;
-const BODY_SIZE = 13.75;
-const BODY_LINE_H = 20;
-const LOGO_H = 40;
+const HEADING_SIZE = 37.8;
+const SUBHEADING_SIZE = 24.5;
+const BODY_SIZE = 19.11;
+const BODY_LINE_H = 26.46;
+const LOGO_H = 70;
 
 function wrapText(
   ctx: CanvasRenderingContext2D,
@@ -185,7 +185,7 @@ export default function FinalImageOption1({ data, onImageReady }: Props) {
         const lastPhotoRight = STRIP_X + PHOTO_INNER_PAD + PHOTO_COUNT * (PHOTO_W + PHOTO_GAP) - PHOTO_GAP;
         const gapLeft = lastPhotoRight + PHOTO_GAP;
         const gapRight = STRIP_X + STRIP_W;
-        const logoX = Math.round(gapLeft + (gapRight - gapLeft - logoW) / 2);
+        const logoX = Math.round(gapLeft + (gapRight - gapLeft - logoW) / 2) - 4;
         const logoY = STRIP_Y + Math.floor((STRIP_H - LOGO_H) / 2);
         ctx.drawImage(logoImg, logoX, logoY, logoW, LOGO_H);
       }
@@ -230,7 +230,8 @@ export default function FinalImageOption1({ data, onImageReady }: Props) {
 
   const remainingH = CARD_H - 40 - cursorY;
   const maxBodyLines = Math.floor(remainingH / BODY_LINE_H);
-  const bodyLines = wrapText(ctx, data.answerText || "", CONTENT_W, maxBodyLines);
+  const answerText = (data.answerText || "").split(/\s+/).slice(0, 100).join(" ");
+  const bodyLines = wrapText(ctx, answerText, CONTENT_W, maxBodyLines);
 
   bodyLines.forEach((line) => {
     ctx.fillText(line, CONTENT_X, cursorY);

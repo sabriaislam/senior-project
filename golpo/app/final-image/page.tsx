@@ -133,7 +133,7 @@ export default function FinalImagePage() {
           ))}
         </div>
 
-        <div className="flex items-center justify-end gap-3 mt-5">
+        <div className="flex flex-col items-center gap-3 mt-5">
           <button
             type="button"
             onClick={() => { if (cardImageUrl) printImage(cardImageUrl); }}
@@ -143,7 +143,7 @@ export default function FinalImagePage() {
             onMouseLeave={() => setPressedBtn(null)}
             onTouchStart={() => setPressedBtn("print")}
             onTouchEnd={() => setPressedBtn(null)}
-            className="mr-auto disabled:opacity-40"
+            className="disabled:opacity-40"
             style={{
               background: "none",
               border: "none",
@@ -158,7 +158,7 @@ export default function FinalImagePage() {
             }}
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/buttons/print-button.svg" alt="Print" className="h-10" />
+            <img src="/buttons/print-button.svg" alt="Print" className="h-20" />
           </button>
           <a
             href={`/share?layout=${selected}`}

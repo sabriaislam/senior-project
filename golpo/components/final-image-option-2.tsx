@@ -16,28 +16,28 @@ const RENDER_SCALE = 2;
 const BG = "#F0F0F0";
 
 // Panel
-const PANEL_X = 517.5;
-const PANEL_Y = 100;
-const PANEL_W = 330;
-const PANEL_H = 407;
+const PANEL_X = 484;
+const PANEL_Y = 40;
+const PANEL_W = 392;
+const PANEL_H = 520;
 
 // Photos
 const PHOTOS = [
-  { x: 526.5, y: 133.5, w: 147, h: 147 },
-  { x: 691.5, y: 133.5, w: 147, h: 147 },
-  { x: 526.5, y: 299.5, w: 147, h: 147 },
-  { x: 691.5, y: 299.5, w: 147, h: 147 },
+  { x: 493, y: 49, w: 180, h: 180 },
+  { x: 687, y: 49, w: 180, h: 180 },
+  { x: 493, y: 247, w: 180, h: 180 },
+  { x: 687, y: 247, w: 180, h: 180 },
 ];
 
 // Text
-const TEXT_LEFT = 59;
-const TEXT_RIGHT_MARGIN = 32;
+const TEXT_LEFT = 40;
+const TEXT_RIGHT_MARGIN = 20;
 const TEXT_WIDTH = PANEL_X - TEXT_RIGHT_MARGIN - TEXT_LEFT;
 
-const TITLE_SIZE = 45;
-const BYLINE_SIZE = 17.5;
-const BODY_SIZE = 16.25;
-const BODY_LINE_H = 22.5;
+const TITLE_SIZE = 37.8;
+const BYLINE_SIZE = 24.5;
+const BODY_SIZE = 19.11;
+const BODY_LINE_H = 26.46;
 
 function loadImage(src: string): Promise<HTMLImageElement | null> {
   return new Promise((resolve) => {
@@ -76,7 +76,7 @@ function wrapText(
   ctx: CanvasRenderingContext2D,
   text: string,
   maxWidth: number,
-  lineHeight: number,
+  _lineHeight: number,
   maxLines: number
 ) {
   const words = text.split(" ");
@@ -173,7 +173,7 @@ export default function FinalImageOption2({
 
       // Logo
       if (logo) {
-        const logoW = 50;
+        const logoW = 120;
         // Calculate height based on natural aspect ratio to prevent stretching
         const logoH = (logo.naturalHeight / logo.naturalWidth) * logoW;
 
@@ -199,7 +199,7 @@ export default function FinalImageOption2({
       // TEXT
       // --- TEXT RENDERING SECTION ---
       // --- Standardized Text Section for Option 02 ---
-      let cursorY = PANEL_Y; // Should be 100
+      let cursorY = PANEL_Y + 40;
 
       ctx.textBaseline = "top";
       ctx.fillStyle = "#6298DB";
@@ -243,9 +243,10 @@ export default function FinalImageOption2({
       const remainingHeight = (PANEL_Y + PANEL_H) - cursorY;
       const maxLines = Math.floor(remainingHeight / BODY_LINE_H);
 
+      const answerText = (data.answerText || "").split(/\s+/).slice(0, 100).join(" ");
       const bodyLines = wrapText(
         ctx,
-        data.answerText || "",
+        answerText,
         TEXT_WIDTH,
         BODY_LINE_H,
         maxLines
