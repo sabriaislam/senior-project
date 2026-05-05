@@ -28,10 +28,8 @@ export async function POST(request: NextRequest) {
       from: `"Golpo" <${process.env.GMAIL_USER}>`,
       to: email,
       subject: `${name}'s Golpo Card`,
-      html: `<p>Hi ${name},</p>
-      <p>Thank you for being a part of my project—I really appreciate it. I’ve attached your card below. Hope it gives you a small push to document your life a bit more and share your stories with the people around you.</p>
-      <br><br>
-      <p>Sabria <3</p>`,
+      text: `Hi ${name},\n\nThank you for being a part of my project—I really appreciate it. I’ve attached your card below. Hope it gives you a small push to document your life a bit more and share your stories with the people around you.\n\nSabria <3`,
+      html: `<!DOCTYPE html><html><body style="font-family:sans-serif;font-size:16px;line-height:1.6;color:#111;max-width:600px;margin:0 auto;padding:24px"><p>Hi ${name},</p><p>Thank you for being a part of my project&mdash;I really appreciate it. I&rsquo;ve attached your card below. Hope it gives you a small push to document your life a bit more and share your stories with the people around you.</p><br><p>Sabria &lt;3</p></body></html>`,
       attachments: [
         {
           filename: "golpo-postcard.png",
