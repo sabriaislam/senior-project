@@ -17,7 +17,7 @@ export default function WelcomePage() {
   }, []);
 
   return (
-    <PageShell videoSrc="/firstpage.mp4" brightness={0.7}>
+    <PageShell videoSrc="/firstpage.gif" brightness={0.7}>
       {/* Color overlay over video, below text */}
       <div
         className="absolute inset-0"

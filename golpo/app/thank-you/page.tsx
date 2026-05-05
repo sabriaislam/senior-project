@@ -16,7 +16,7 @@ export default function ThankYouPage() {
   }
 
   return (
-    <PageShell videoSrc="/firstpage.mp4" brightness={0.7}>
+    <PageShell videoSrc="/firstpage.gif" brightness={0.7}>
       {/* 1. Overlay */}
       <div
         className="absolute inset-0"
@@ -91,9 +91,10 @@ export default function ThankYouPage() {
           <p className="text-white/75 text-xl font-[family-name:var(--font-gayatri)] italic pointer-events-auto mt-6 flex flex-col items-center text-center">
             to read more go to{" "}
             <a href="https://golpo-project.com" className="font-bold text-[#6298DB] hover:underline">
-              golpo.com
+              golpo-project.com
             </a>
           </p>
+
       </div>
     </PageShell>
   );

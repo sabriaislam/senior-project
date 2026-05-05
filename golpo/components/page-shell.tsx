@@ -13,17 +13,34 @@ interface PageShellProps {
 }
 
 export function PageShell({ videoSrc, brightness = 1, grain = true, children }: PageShellProps) {
+  const isGif = videoSrc.endsWith(".gif");
+  const mediaStyle: React.CSSProperties = {
+    filter: `brightness(${brightness})`,
+    zIndex: 2,
+    transform: "scale(1.3) translateX(10%)",
+  };
+
   return (
     <main className="relative w-screen h-screen overflow-hidden bg-black">
-      <video
-        src={videoSrc}
-        autoPlay
-        loop
-        muted
-        playsInline
-        className="absolute inset-0 w-full h-full object-cover"
-        style={{ filter: `brightness(${brightness})`, zIndex: 2, transform: "scale(1.3) translateX(10%)" }}
-      />
+      {isGif ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={videoSrc}
+          alt=""
+          className="absolute inset-0 w-full h-full object-cover"
+          style={mediaStyle}
+        />
+      ) : (
+        <video
+          src={videoSrc}
+          autoPlay
+          loop
+          muted
+          playsInline
+          className="absolute inset-0 w-full h-full object-cover"
+          style={mediaStyle}
+        />
+      )}
       {grain && <FilmGrain />}
       {children}
     </main>
