@@ -203,16 +203,13 @@ export default function AnswersPage() {
                     style={{
                       width: "100%",
                       height: "51px",
-                      backgroundColor: isActive
-                        ? "#db62a0"
-                        : "#F6F6F6",
+                      backgroundColor: isActive ? "rgba(243, 172, 209, 0.95)" : "#F6F6F6",
                       boxShadow: "0 5px 4px rgba(0,0,0,0.25)",
-                      border: "none",
+                      border: isActive ? "3px solid #db62a0" : "3px solid transparent",
                       cursor: "pointer",
-                      fontSize:
-                        "clamp(0.75rem, 0.9vw, 1rem)",
+                      fontSize: "clamp(0.75rem, 0.9vw, 1rem)",
                       fontWeight: 700,
-                      color: isActive ? "#fff" : "#000",
+                      color: "#000",
                       whiteSpace: "nowrap",
                       overflow: "hidden",
                       textOverflow: "ellipsis",
@@ -270,13 +267,13 @@ export default function AnswersPage() {
 
       {/* ── Footer ── */}
       <footer
-        className="font-roboto-mono"
+        className="font-gayatri"
         style={{
           position: "relative",
           zIndex: 10,
           textAlign: "center",
           padding: "3vh 0 4vh",
-          fontSize: "0.7rem",
+          fontSize: "1rem",
           color: "#fff",
           letterSpacing: "0.08em",
         }}
