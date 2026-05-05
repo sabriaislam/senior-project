@@ -90,7 +90,7 @@ export default function ThankYouPage() {
         </div>
           <p className="text-white/75 text-xl font-[family-name:var(--font-gayatri)] italic pointer-events-auto mt-6 flex flex-col items-center text-center">
             to read more go to{" "}
-            <a href="https://golpo.com" className="font-bold text-[#6298DB] hover:underline">
+            <a href="https://golpo-project.com" className="font-bold text-[#6298DB] hover:underline">
               golpo.com
             </a>
           </p>
