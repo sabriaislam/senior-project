@@ -27,8 +27,11 @@ export async function POST(request: NextRequest) {
     await transporter.sendMail({
       from: `"Golpo" <${process.env.GMAIL_USER}>`,
       to: email,
-      subject: `Your Golpo postcard — ${name}`,
-      html: `<p>Hi ${name},</p><p>Your Golpo postcard is attached.</p>`,
+      subject: `${name}'s Golpo Card`,
+      html: `<p>Hi ${name},</p>
+      <p>Thank you for being a part of my project—I really appreciate it. I’ve attached your card below. Hope it gives you a small push to document your life a bit more and share your stories with the people around you.</p>
+      <br><br>
+      <p>Sabria <3</p>`,
       attachments: [
         {
           filename: "golpo-postcard.png",
