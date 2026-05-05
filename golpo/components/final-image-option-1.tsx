@@ -46,10 +46,10 @@ const CONTENT_X = STRIP_X;
 const CONTENT_Y = STRIP_Y + STRIP_H + 28;
 const CONTENT_W = STRIP_W;
 
-const HEADING_SIZE = 28;
-const SUBHEADING_SIZE = 13;
-const BODY_SIZE = 11;
-const BODY_LINE_H = 16;
+const HEADING_SIZE = 35;
+const SUBHEADING_SIZE = 16.25;
+const BODY_SIZE = 13.75;
+const BODY_LINE_H = 20;
 const LOGO_H = 40;
 
 function wrapText(

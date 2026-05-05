@@ -34,10 +34,10 @@ const TEXT_LEFT = 59;
 const TEXT_RIGHT_MARGIN = 32;
 const TEXT_WIDTH = PANEL_X - TEXT_RIGHT_MARGIN - TEXT_LEFT;
 
-const TITLE_SIZE = 36;
-const BYLINE_SIZE = 14;
-const BODY_SIZE = 13;
-const BODY_LINE_H = 18;
+const TITLE_SIZE = 45;
+const BYLINE_SIZE = 17.5;
+const BODY_SIZE = 16.25;
+const BODY_LINE_H = 22.5;
 
 function loadImage(src: string): Promise<HTMLImageElement | null> {
   return new Promise((resolve) => {
