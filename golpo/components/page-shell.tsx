@@ -13,7 +13,7 @@ interface PageShellProps {
 }
 
 export function PageShell({ videoSrc, brightness = 1, grain = true, children }: PageShellProps) {
-  const isGif = videoSrc.endsWith(".gif");
+  const isGif = videoSrc.endsWith(".gif") || videoSrc.endsWith(".jpg") || videoSrc.endsWith(".png");
   const mediaStyle: React.CSSProperties = {
     filter: `brightness(${brightness})`,
     zIndex: 2,

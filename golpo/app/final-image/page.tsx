@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import FinalImageOption1, { type FinalImageData } from "@/components/final-image-option-1";
 import FinalImageOption2 from "@/components/final-image-option-2";
-import { FilmGrain } from "@/components/film-grain";
 import { getUserDb } from "@/lib/firebase/user-db";
 
 const DEFAULT_DATA: FinalImageData = {
@@ -20,6 +20,7 @@ export default function FinalImagePage() {
   const [selected, setSelected] = useState<1 | 2 | 3>(1);
   const [cardImageUrls, setCardImageUrls] = useState<Record<1 | 2 | 3, string | null>>({ 1: null, 2: null, 3: null });
   const [pressedBtn, setPressedBtn] = useState<string | null>(null);
+  const router = useRouter();
 
   const cardImageUrl = cardImageUrls[selected];
 
@@ -39,8 +40,8 @@ export default function FinalImagePage() {
     div.appendChild(img);
     document.head.appendChild(style);
     document.body.appendChild(div);
+    window.addEventListener("afterprint", () => { style.remove(); div.remove(); router.push(`/share?layout=${selected}`); }, { once: true });
     window.print();
-    window.addEventListener("afterprint", () => { style.remove(); div.remove(); }, { once: true });
   }
 
   useEffect(() => {
@@ -160,25 +161,6 @@ export default function FinalImagePage() {
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/buttons/print-button.svg" alt="Print" className="h-20" />
           </button>
-          <a
-            href={`/share?layout=${selected}`}
-            onMouseDown={() => setPressedBtn("next")}
-            onMouseUp={() => setPressedBtn(null)}
-            onMouseLeave={() => setPressedBtn(null)}
-            onTouchStart={() => setPressedBtn("next")}
-            onTouchEnd={() => setPressedBtn(null)}
-            style={{
-              display: "inline-block",
-              transform: pressedBtn === "next" ? "scale(0.88)" : "scale(1)",
-              filter: pressedBtn === "next" ? "brightness(0.8)" : "brightness(1)",
-              transition: pressedBtn === "next"
-                ? "transform 0.08s ease, filter 0.08s ease"
-                : "transform 0.25s cubic-bezier(0.34,1.56,0.64,1), filter 0.25s ease",
-            }}
-          >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/buttons/next-button.svg" alt="Next" className="h-10" />
-          </a>
         </div>
 
         {isLoading ? <p className="text-sm mt-2" style={{ color: "rgba(255,255,255,0.5)" }}>Loading...</p> : null}
