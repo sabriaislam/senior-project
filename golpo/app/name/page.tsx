@@ -60,7 +60,7 @@ export default function NamePage() {
   }
 
   return (
-    <PageShell videoSrc="/bg/how-will-u-be-rmm.gif" brightness={0.9}>
+    <PageShell videoSrc="/bg/how-will-u-be-rmm.webm" brightness={0.9}>
       <div
         className="absolute inset-0"
         style={{ zIndex: 20 }}
