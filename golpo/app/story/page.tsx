@@ -126,9 +126,8 @@ export default function StoryPage() {
 
       {/* Right panel */}
       <div className="relative flex-1" style={{ backgroundColor: "#0e3d77", minHeight: isMobile ? "45%" : undefined }}>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
         <video
-          src="/bg/world-spin-clear.mp4"
+          src="/bg/world-spin-clear.webm"
           autoPlay
           loop
           muted
