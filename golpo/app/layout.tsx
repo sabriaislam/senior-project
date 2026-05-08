@@ -48,7 +48,31 @@ export default function RootLayout({
         className={`antialiased ${blur.variable} ${karla.variable} ${pixel.variable} ${gayatri.variable} ${robotoMono.variable}`}
       >
         {children}
+        <DeploymentCheck />
       </body>
     </html>
+  );
+}
+
+function DeploymentCheck() {
+  // Injected at build time by Next.js — undefined in dev, a hash string in prod
+  const buildId = process.env.NEXT_PUBLIC_BUILD_ID ?? "dev";
+  return (
+    <script
+      dangerouslySetInnerHTML={{
+        __html: `
+(function() {
+  var BUILD_ID = ${JSON.stringify(buildId)};
+  var stored = sessionStorage.getItem('__build_id');
+  if (stored && stored !== BUILD_ID) {
+    sessionStorage.setItem('__build_id', BUILD_ID);
+    window.location.reload();
+  } else {
+    sessionStorage.setItem('__build_id', BUILD_ID);
+  }
+})();
+        `.trim(),
+      }}
+    />
   );
 }
