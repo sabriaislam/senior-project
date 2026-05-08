@@ -78,6 +78,7 @@ export default function AnswersPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [scrollY, setScrollY] = useState(0);
+  const [isMobile, setIsMobile] = useState(false);
   const imageLayout = useImageLayout();
 
   useEffect(() => {
@@ -93,12 +94,19 @@ export default function AnswersPage() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 700);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
+
   return (
     <main
       className="w-screen min-h-screen flex flex-col"
       style={{ backgroundColor: "#6298DB", position: "relative" }}
     >
-      {/* ── Parallax background images (fixed, shift at different rates on scroll) ── */}
+      {/* ── Parallax background images ── */}
       <div style={{ position: "fixed", inset: 0, overflow: "hidden", pointerEvents: "none", zIndex: 0 }}>
         {imageLayout.map((img, i) => (
           <div
@@ -140,130 +148,185 @@ export default function AnswersPage() {
           alt="Golpo Answers"
           width={450}
           height={200}
-          style={{ width: "200px", height: "auto" }}
+          style={{ width: isMobile ? "150px" : "200px", height: "auto" }}
           priority
         />
       </div>
 
-      {/* ── Buttons + Expanding Columns ── */}
-      <div style={{ padding: "0 5vw", flex: 1, position: "relative", zIndex: 10 }}>
-        <div
-          style={{
-            display: "flex",
-            gap: "12px",
-            alignItems: "flex-start",
-            minHeight: "60vh",
-          }}
-        >
+      {isMobile ? (
+        /* ── Mobile: stacked accordion ── */
+        <div style={{ padding: "0 5vw", flex: 1, position: "relative", zIndex: 10, display: "flex", flexDirection: "column", gap: "0px" }}>
           {isLoading ? (
             Array.from({ length: 5 }).map((_, i) => (
               <div
                 key={i}
                 style={{
-                  flex: 1,
-                  height: "51px",
+                  height: "52px",
                   backgroundColor: "#F6F6F6",
                   opacity: 0.6,
+                  marginBottom: "10px",
                 }}
               />
             ))
           ) : (
             STORY_PROMPTS.map((prompt) => {
               const isActive = activeCategory === prompt.category;
-              const isSomeActive = activeCategory !== null;
-
-              const filtered = entries.filter(
-                (e) => e.storyCategory === prompt.category
-              );
+              const filtered = entries.filter((e) => e.storyCategory === prompt.category);
 
               return (
-                <div
-                  key={prompt.category}
-                  style={{
-                    flex: isActive
-                      ? "2.5 1 0"
-                      : isSomeActive
-                      ? "0.8 1 0"
-                      : "1 1 0",
-                    display: "flex",
-                    flexDirection: "column",
-                    transition:
-                      "flex 0.35s cubic-bezier(0.4,0,0.2,1)",
-                    minWidth: isSomeActive ? "120px" : "0px",
-                  }}
-                >
+                <div key={prompt.category} style={{ marginBottom: "10px" }}>
                   <button
                     type="button"
-                    onClick={() =>
-                      setActiveCategory(
-                        isActive ? null : prompt.category
-                      )
-                    }
+                    onClick={() => setActiveCategory(isActive ? null : prompt.category)}
                     className="font-roboto-mono"
                     style={{
                       width: "100%",
-                      height: "51px",
+                      height: "52px",
                       backgroundColor: isActive ? "rgba(243, 172, 209, 0.95)" : "#F6F6F6",
                       boxShadow: "0 5px 4px rgba(0,0,0,0.25)",
                       border: isActive ? "3px solid #db62a0" : "3px solid transparent",
                       cursor: "pointer",
-                      fontSize: "clamp(0.75rem, 0.9vw, 1rem)",
+                      fontSize: "0.85rem",
                       fontWeight: 700,
                       color: "#000",
-                      whiteSpace: "nowrap",
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      padding: "0 16px",
+                      textAlign: "left",
                     }}
                   >
-                    {prompt.label}
+                    <span>{prompt.label}</span>
+                    <span style={{ fontSize: "1.1rem", lineHeight: 1, flexShrink: 0 }}>
+                      {isActive ? "▲" : "▼"}
+                    </span>
                   </button>
 
-                  {/* Cards under active column */}
-                  <div
-                    style={{
-                      overflow: "hidden",
-                      maxHeight: isActive ? "none" : "0px",
-                      transition: "max-height 0.35s cubic-bezier(0.4,0,0.2,1)",
-                      display: "flex",
-                      flexDirection: "column",
-                    }}
-                  >
+                  {isActive && (
                     <div
                       style={{
-                        display: "grid",
-                        gridTemplateColumns: "1fr",
-                        gap: "16px",
-                        marginTop: "16px",
-                        paddingRight: "6px",
-                        paddingBottom: "4vh",
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: "12px",
+                        padding: "12px 0 8px",
                       }}
                     >
                       {filtered.length > 0 ? (
                         filtered.map((entry) => (
-                          <StoryCard
-                            key={entry.id}
-                            entry={entry}
-                          />
+                          <StoryCard key={entry.id} entry={entry} />
                         ))
                       ) : (
-                        <p
-                          className="font-roboto-mono"
-                          style={{
-                            fontSize: "0.7rem",
-                            color: "#fff",
-                          }}
-                        >
+                        <p className="font-roboto-mono" style={{ fontSize: "0.75rem", color: "#fff" }}>
                           No stories yet.
                         </p>
                       )}
                     </div>
-                  </div>
+                  )}
                 </div>
               );
             })
           )}
+          <div style={{ height: "4vh" }} />
         </div>
-      </div>
+      ) : (
+        /* ── Desktop: expanding columns ── */
+        <div style={{ padding: "0 5vw", flex: 1, position: "relative", zIndex: 10 }}>
+          <div
+            style={{
+              display: "flex",
+              gap: "12px",
+              alignItems: "flex-start",
+              minHeight: "60vh",
+            }}
+          >
+            {isLoading ? (
+              Array.from({ length: 5 }).map((_, i) => (
+                <div
+                  key={i}
+                  style={{
+                    flex: 1,
+                    height: "51px",
+                    backgroundColor: "#F6F6F6",
+                    opacity: 0.6,
+                  }}
+                />
+              ))
+            ) : (
+              STORY_PROMPTS.map((prompt) => {
+                const isActive = activeCategory === prompt.category;
+                const isSomeActive = activeCategory !== null;
+                const filtered = entries.filter((e) => e.storyCategory === prompt.category);
+
+                return (
+                  <div
+                    key={prompt.category}
+                    style={{
+                      flex: isActive ? "2.5 1 0" : isSomeActive ? "0.8 1 0" : "1 1 0",
+                      display: "flex",
+                      flexDirection: "column",
+                      transition: "flex 0.35s cubic-bezier(0.4,0,0.2,1)",
+                      minWidth: isSomeActive ? "120px" : "0px",
+                    }}
+                  >
+                    <button
+                      type="button"
+                      onClick={() => setActiveCategory(isActive ? null : prompt.category)}
+                      className="font-roboto-mono"
+                      style={{
+                        width: "100%",
+                        height: "51px",
+                        backgroundColor: isActive ? "rgba(243, 172, 209, 0.95)" : "#F6F6F6",
+                        boxShadow: "0 5px 4px rgba(0,0,0,0.25)",
+                        border: isActive ? "3px solid #db62a0" : "3px solid transparent",
+                        cursor: "pointer",
+                        fontSize: "clamp(0.75rem, 0.9vw, 1rem)",
+                        fontWeight: 700,
+                        color: "#000",
+                        whiteSpace: "nowrap",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                      }}
+                    >
+                      {prompt.label}
+                    </button>
+
+                    <div
+                      style={{
+                        overflow: "hidden",
+                        maxHeight: isActive ? "none" : "0px",
+                        transition: "max-height 0.35s cubic-bezier(0.4,0,0.2,1)",
+                        display: "flex",
+                        flexDirection: "column",
+                      }}
+                    >
+                      <div
+                        style={{
+                          display: "grid",
+                          gridTemplateColumns: "1fr",
+                          gap: "16px",
+                          marginTop: "16px",
+                          paddingRight: "6px",
+                          paddingBottom: "4vh",
+                        }}
+                      >
+                        {filtered.length > 0 ? (
+                          filtered.map((entry) => (
+                            <StoryCard key={entry.id} entry={entry} />
+                          ))
+                        ) : (
+                          <p className="font-roboto-mono" style={{ fontSize: "0.7rem", color: "#fff" }}>
+                            No stories yet.
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </div>
+      )}
 
       {/* ── Footer ── */}
       <footer
