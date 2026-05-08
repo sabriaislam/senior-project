@@ -94,9 +94,9 @@ function SharePageInner() {
   }
 
   return (
-    <main className="relative grid min-h-screen w-full grid-cols-2 overflow-hidden" style={{ background: "#DB62A0" }}>
+    <main className="relative grid min-h-screen w-full grid-cols-1 sm:grid-cols-2 overflow-hidden" style={{ background: "#DB62A0" }}>
       {/* Left — postcard preview */}
-      <div className="relative flex items-center justify-center p-10 border-r border-white/10" style={{ zIndex: 20 }}>
+      <div className="relative flex items-center justify-center p-6 sm:p-10 border-b sm:border-b-0 sm:border-r border-white/10" style={{ zIndex: 20 }}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src="/bg/design4.jpg"
@@ -123,7 +123,7 @@ function SharePageInner() {
       </div>
 
       {/* Right — actions */}
-      <div className="bg-[#6298DB] relative flex items-center justify-center p-10" style={{ zIndex: 20 }}>
+      <div className="bg-[#6298DB] relative flex items-center justify-center p-6 sm:p-10" style={{ zIndex: 20 }}>
         <FilmGrain/>
         {/* Top: heading + email form */}
         <div className="w-full max-w-lg flex flex-col justify-start gap-4">
@@ -147,7 +147,7 @@ function SharePageInner() {
           </Link>
 
           <div className="flex flex-col gap-1">
-            <span className="text-5xl"><span className="font-pixel">K</span><span className="font-gayatri" style={{ fontStyle: "italic" }}>eep your story</span></span>
+            <span style={{ fontSize: "clamp(2rem, 8vw, 3rem)" }}><span className="font-pixel">K</span><span className="font-gayatri" style={{ fontStyle: "italic" }}>eep your story</span></span>
               <p className="font-karla leading-tight text-lg" style={{ color: "#ede4e6" }}>
               email your postcard
             </p>
@@ -162,7 +162,7 @@ function SharePageInner() {
                 placeholder="youremail@example.com"
                 className="font-roboto-mono px-2 py-2 text-base text-black outline-none"
                 style={{
-                  width: "280px",
+                  width: "min(280px, 55vw)",
                   backgroundColor: "rgba(217, 217, 217, 0.7)",
                   boxShadow: "inset 0 2px 8px rgba(0,0,0,0.2)",
                 }}              />

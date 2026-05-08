@@ -19,6 +19,14 @@ export default function NamePage() {
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pressed, setPressed] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 700);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
 
   useEffect(() => {
     try {
@@ -69,9 +77,9 @@ export default function NamePage() {
         <div
           style={{
             position: "absolute",
-            left: "5%",
-            top: "7%",
-            width: "50%",
+            left: isMobile ? "5%" : "5%",
+            top: isMobile ? "5%" : "7%",
+            width: isMobile ? "90%" : "50%",
           }}
         >
           {/* SVG background (brown rect + gold stars) */}
@@ -95,7 +103,7 @@ export default function NamePage() {
           >
             <h1
               className="text-white mb-5"
-              style={{ fontSize: "3rem", lineHeight: 1.2 }}
+              style={{ fontSize: "clamp(1.4rem, 4.5vw, 3rem)", lineHeight: 1.2 }}
             >
               <span className="font-pixel">H</span>
               <span className="font-gayatri" style={{ fontStyle: "italic" }}>ow do you want to be remembered?</span>
@@ -112,7 +120,7 @@ export default function NamePage() {
                   placeholder="Enter your name"
                   className="font-roboto-mono px-2 py-2 text-base text-black outline-none"
                   style={{
-                    width: "280px",
+                    width: "min(280px, 60vw)",
                     backgroundColor: "rgba(210, 188, 162, 0.9)",
                     boxShadow: "inset 0 2px 8px rgba(0,0,0,0.2)",
                   }}

@@ -9,7 +9,15 @@ export default function StoryPage() {
   const [entry, setEntry] = useState<ResponseEntry | null>(null);
   const [showNav, setShowNav] = useState(false);
   const [pressed, setPressed] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 700);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
 
   useEffect(() => {
     let mounted = true;
@@ -64,7 +72,7 @@ export default function StoryPage() {
 
 
   return (
-    <main className="relative w-screen h-screen overflow-hidden flex">
+    <main className="relative w-screen h-screen overflow-hidden flex" style={{ flexDirection: isMobile ? "column" : "row" }}>
       {/* Film grain overlay */}
       <canvas
         ref={canvasRef}
@@ -76,18 +84,21 @@ export default function StoryPage() {
       <div
         className="relative flex flex-col justify-end"
         style={{
-          width: "50%",
+          width: isMobile ? "100%" : "50%",
+          height: isMobile ? "55%" : "100%",
           backgroundColor: "#EDEDED",
           paddingLeft: "6%",
           paddingRight: "6%",
-          paddingBottom: "10%",
+          paddingBottom: isMobile ? "6%" : "10%",
+          paddingTop: isMobile ? "6%" : "0",
           zIndex: 10,
           opacity: entry ? 1 : 0,
           transition: "opacity 0.4s ease",
+          overflowY: "auto",
         }}
       >
-        <h1 className="text-left leading-tight mb-2" style={{ fontSize: "3rem", color:"#000000"}}>
-          <span className="font-pixel" style={{ fontSize: "3rem" }}>T</span>
+        <h1 className="text-left leading-tight mb-2" style={{ fontSize: "clamp(1.8rem, 6vw, 3rem)", color:"#000000"}}>
+          <span className="font-pixel" style={{ fontSize: "clamp(1.8rem, 6vw, 3rem)" }}>T</span>
           <span className="font-gayatri" style={{ fontStyle: "italic" }}>his is </span>
           <span className="font-gayatri" style={{ fontStyle: "italic", color: "#255085 " }}>{entry?.name ?? ""}</span>
           <span className="font-gayatri" style={{ fontStyle: "italic" }}>{`${entry?.name ? "'s" : ""} story`}</span>
@@ -114,7 +125,7 @@ export default function StoryPage() {
       </div>
 
       {/* Right panel */}
-      <div className="relative flex-1" style={{ backgroundColor: "#0e3d77" }}>
+      <div className="relative flex-1" style={{ backgroundColor: "#0e3d77", minHeight: isMobile ? "45%" : undefined }}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <video
           src="/bg/world-spin-clear.mp4"
@@ -122,7 +133,7 @@ export default function StoryPage() {
           loop
           muted
           playsInline
-          style={{ position: "absolute", top: -45, left: 120, width: "70%", height: "auto", display: "block" }}
+          style={{ position: "absolute", top: isMobile ? 0 : -45, left: isMobile ? "50%" : 120, transform: isMobile ? "translateX(-50%)" : "none", width: isMobile ? "100%" : "70%", height: "auto", display: "block" }}
         />
         {/* Nav button */}
         <div

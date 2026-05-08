@@ -64,9 +64,9 @@ export default function QuestionsPage() {
   return (
     <PageShell videoSrc="/bg/questions-compressed.mp4" brightness={1} grain={false}>
       <div style={{ position: "absolute", inset: 0, backgroundColor: "#C19574", opacity: 0.22, mixBlendMode: "screen", zIndex: 3, pointerEvents: "none" }} />
-      <div className="absolute inset-0 flex items-center justify-end" style={{ zIndex: 20, paddingRight: "5%", paddingTop: "6vh" }}>
+      <div className="absolute inset-0 flex items-center justify-center sm:justify-end" style={{ zIndex: 20, paddingRight: "5%", paddingLeft: "5%", paddingTop: "6vh" }}>
         {/* Paper card — everything inside uses % of card width so it all scales together */}
-        <div style={{ position: "relative", width: "min(52%, 560px)" }}>
+        <div style={{ position: "relative", width: "min(90vw, 560px)" }}>
 
           {/* paper.png — top offset is 6.4% of card width (≈36px at max 560px) */}
           <Image
@@ -129,7 +129,7 @@ export default function QuestionsPage() {
                         : "2px solid transparent",
                     borderRadius: "9999px",
                     padding: "0.5em 0.5em",
-                    fontSize: "clamp(0.6rem, 1vw, 0.85rem)",
+                    fontSize: "clamp(0.65rem, 2vw, 0.85rem)",
                     fontWeight: 700,
                     cursor: saving ? "not-allowed" : "pointer",
                     boxShadow: "0 4px 14px rgba(0,0,0,0.18)",

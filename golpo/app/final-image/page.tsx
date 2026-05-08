@@ -98,12 +98,12 @@ export default function FinalImagePage() {
         style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", filter: "brightness(0.3)", zIndex: 1 }}
       />
       <div
-        className="absolute inset-0 flex flex-col justify-center"
-        style={{ zIndex: 20, padding: "0 20vw" }}
+        className="absolute inset-0 flex flex-col justify-center overflow-y-auto"
+        style={{ zIndex: 20, padding: "4vh clamp(1.5rem, 10vw, 20vw)" }}
       >
         {/* Headings — mirrors /answer structure */}
-        <div className="flex flex-col gap-1 mb-10">
-          <span className="text-5xl"><span className="font-pixel">T</span><span className="font-gayatri" style={{ fontStyle: "italic" }}>hank you for sharing your story</span></span>
+        <div className="flex flex-col gap-1 mb-6 sm:mb-10">
+          <span style={{ fontSize: "clamp(1.8rem, 5vw, 3rem)" }}><span className="font-pixel">T</span><span className="font-gayatri" style={{ fontStyle: "italic" }}>hank you for sharing your story</span></span>
           <p className="font-karla leading-tight text-lg" style={{ color: "#ede4e6" }}>
             Choose your layout for your postcard
           </p>

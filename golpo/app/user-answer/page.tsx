@@ -74,8 +74,8 @@ export default function AnswerPage() {
 
   return (
     <main
-      className="w-screen h-screen overflow-hidden flex items-center justify-center"
-      style={{ backgroundColor: "#6298DB" }}
+      className="w-screen min-h-screen flex items-center justify-center"
+      style={{ backgroundColor: "#6298DB", padding: "2vh 0" }}
     >
       {/* design1 overlay with screen blend */}
       {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -99,8 +99,9 @@ export default function AnswerPage() {
       <div
         className="relative overflow-hidden"
         style={{
-          width: "61vw",
-          height: "60vh",
+          width: "min(92vw, 61vw)",
+          minHeight: "60vh",
+          height: "auto",
           backgroundColor: "#DB62A0",
           zIndex: 2,
         }}
@@ -121,8 +122,8 @@ export default function AnswerPage() {
         {/* Inner content */}
         <div
           style={{
-            position: "absolute",
-            inset: "7.7%",
+            position: "relative",
+            padding: "7.7%",
             zIndex: 1,
             display: "flex",
             flexDirection: "column",
@@ -154,7 +155,7 @@ export default function AnswerPage() {
               style={{
                 color: "white",
                 fontFamily: "'Roboto Mono', monospace",
-                fontSize: "clamp(0.7rem, 1.1vw, 0.9rem)",
+                fontSize: "clamp(0.75rem, 2.2vw, 0.9rem)",
                 fontWeight: 700,
                 marginBottom: "1.25rem",
                 lineHeight: 1.4,
@@ -173,7 +174,7 @@ export default function AnswerPage() {
             }}
             className="font-roboto-mono outline-none resize-none"
             style={{
-              height: "65%",
+              height: "clamp(160px, 30vh, 260px)",
               backgroundColor: "rgba(214, 214, 214, 0.6)",
               border: "none",
               padding: "1.5rem",

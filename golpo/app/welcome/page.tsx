@@ -53,14 +53,14 @@ export default function WelcomePage() {
           width={680}
           height={340}
           priority
-          style={{ filter: "drop-shadow(0px 6px 40px rgba(0,0,0,0.8))" }}
+          style={{ filter: "drop-shadow(0px 6px 40px rgba(0,0,0,0.8))", width: "min(680px, 85vw)", height: "auto" }}
         />
 
         <div
           className="text-white text-center font-[var(--font-karla)]"
           style={{
             marginTop: "1rem",
-            fontSize: "1.45rem",
+            fontSize: "clamp(1rem, 4vw, 1.45rem)",
             lineHeight: 1.5,
             textShadow: "0 2px 12px rgba(0,0,0,0.5)",
             transition: "filter 2s ease, opacity 2s ease",

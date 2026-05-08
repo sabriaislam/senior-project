@@ -48,7 +48,7 @@ export default function ThankYouPage() {
         <h1
           className="text-white text-center font-[family-name:var(--font-blur)]"
           style={{
-            fontSize: "10rem", // Adjusted size for impact
+            fontSize: "clamp(3.5rem, 18vw, 10rem)",
             lineHeight: 1.2,
             textShadow: "0 2px 12px rgba(0,0,0,0.5)",
             textTransform: "lowercase",

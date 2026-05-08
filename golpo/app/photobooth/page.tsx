@@ -189,7 +189,7 @@ export default function PhotoboothPage() {
       <h1
         style={{
           color: "#6298DB",
-          fontSize: "clamp(3rem, 2.6vw, 2.2rem)",
+          fontSize: "clamp(1.6rem, 4vw, 3rem)",
           lineHeight: 1.15,
         }}
       >
@@ -200,7 +200,7 @@ export default function PhotoboothPage() {
       </h1>
 
       {/* Camera view */}
-      <div style={{ position: "relative", width: "min(54vh, 45vw)", height: "min(54vh, 45vw)" }}>
+      <div style={{ position: "relative", width: "min(54vh, max(45vw, 280px))", height: "min(54vh, max(45vw, 280px))" }}>
         {/* Live video feed */}
         <video
           ref={videoRef}
