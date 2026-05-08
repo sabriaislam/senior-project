@@ -34,7 +34,6 @@ const robotoMono = Roboto_Mono({
 export const metadata: Metadata = {
   title: "Golpo Project",
   description: "Golpo Project",
-  icons: { icon: "/buttons/corner-star-2.svg" },
 };
 
 export default function RootLayout({
