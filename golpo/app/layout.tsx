@@ -32,7 +32,7 @@ const robotoMono = Roboto_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Golpo Project",
+  title: "Golpo",
   description: "Golpo Project",
 };
 
