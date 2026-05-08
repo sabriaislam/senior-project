@@ -147,7 +147,7 @@ export default function PhotoboothPage() {
       {/* design3 overlay — full page, 180°, below all content */}
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
-        src="/bg/design3.png"
+        src="/bg/design3.jpg"
         alt=""
         aria-hidden
         style={{

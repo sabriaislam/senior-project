@@ -77,7 +77,7 @@ export default function FinalImagePage() {
     <main className="relative min-h-screen w-full overflow-hidden" style={{ background: "#C19574" }}>
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
-        src="/bg/design2.png"
+        src="/bg/design2.jpg"
         alt=""
         aria-hidden
         style={{

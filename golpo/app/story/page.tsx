@@ -116,9 +116,12 @@ export default function StoryPage() {
       {/* Right panel */}
       <div className="relative flex-1" style={{ backgroundColor: "#0e3d77" }}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src="/bg/world-spin-clear.gif"
-          alt=""
+        <video
+          src="/bg/world-spin-clear.mp4"
+          autoPlay
+          loop
+          muted
+          playsInline
           style={{ position: "absolute", top: -45, left: 120, width: "70%", height: "auto", display: "block" }}
         />
         {/* Nav button */}

@@ -16,7 +16,7 @@ export default function ThankYouPage() {
   }
 
   return (
-    <PageShell videoSrc="/firstpage.gif" brightness={0.7}>
+    <PageShell videoSrc="/firstpage-compressed.mp4" brightness={0.7}>
       {/* 1. Overlay */}
       <div
         className="absolute inset-0"

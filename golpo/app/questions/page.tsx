@@ -62,7 +62,7 @@ export default function QuestionsPage() {
   }
 
   return (
-    <PageShell videoSrc="/bg/questions.gif" brightness={1} grain={false}>
+    <PageShell videoSrc="/bg/questions-compressed.mp4" brightness={1} grain={false}>
       <div style={{ position: "absolute", inset: 0, backgroundColor: "#C19574", opacity: 0.22, mixBlendMode: "screen", zIndex: 3, pointerEvents: "none" }} />
       <div className="absolute inset-0 flex items-center justify-end" style={{ zIndex: 20, paddingRight: "5%", paddingTop: "6vh" }}>
         {/* Paper card — everything inside uses % of card width so it all scales together */}

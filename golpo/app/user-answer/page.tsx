@@ -80,7 +80,7 @@ export default function AnswerPage() {
       {/* design1 overlay with screen blend */}
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
-        src="/bg/design1.png"
+        src="/bg/design1.jpg"
         alt=""
         aria-hidden
         style={{
